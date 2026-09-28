@@ -31,7 +31,7 @@ if ! aws lightsail get-instance --instance-name "$NAME" >/dev/null 2>&1; then
     --output text)
   echo "bundle: $BUNDLE"
 
-  USER_DATA=$(sed "s|__DEPLOY_PUBKEY__|$(cat "$DEPLOY_KEY.pub")|" deploy/cloud-init.sh)
+  USER_DATA=$(deploy/user-data.sh "$DEPLOY_KEY.pub")
   aws lightsail create-instances --instance-names "$NAME" \
     --availability-zone "$AZ" --blueprint-id ubuntu_24_04 --bundle-id "$BUNDLE" \
     --key-pair-name "$NAME-admin" --user-data "$USER_DATA"

@@ -1,6 +1,7 @@
 #!/bin/bash
-# First-boot setup for the Lightsail box (Ubuntu 24.04). lightsail.sh
-# replaces __DEPLOY_PUBKEY__ before passing this file as user data.
+# First-boot setup for the Lightsail box (Ubuntu 24.04). user-data.sh fills
+# in __DEPLOY_PUBKEY__ and wraps this file so Lightsail's /bin/sh runs it
+# with bash.
 # Log: /var/log/cloud-init-output.log
 set -euxo pipefail
 

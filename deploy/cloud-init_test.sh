@@ -57,4 +57,36 @@ run_case "2200 never comes up: roll back"      1 no  0 "22"
 run_case "socket restart fails: roll back"     1 no  1 "2200"
 run_case "22 still held after move: roll back" 1 no  0 "22 2200"
 
+# Lightsail runs user data with /bin/sh (dash on Ubuntu) and prepends its own
+# lines, so user-data.sh must produce POSIX sh that hands cloud-init.sh to bash.
+test_user_data() {
+  if ! command -v dash >/dev/null; then
+    echo "skip user data under dash (dash not installed)"
+    return
+  fi
+  local tmp
+  tmp=$(mktemp -d)
+  mkdir "$tmp/bin"
+  echo "ssh-ed25519 AAAATEST deploy" >"$tmp/key.pub"
+  # A stub bash records the script it was asked to run instead of running it.
+  # shellcheck disable=SC2016 # $1 belongs to the stub, not this shell
+  printf '#!/bin/sh\ncp "$1" "%s/ran.sh"\n' "$tmp" >"$tmp/bin/bash"
+  chmod +x "$tmp/bin/bash"
+
+  if ! "$here/user-data.sh" "$tmp/key.pub" | sed "s|/var/lib/portfolio-init|$tmp|g" >"$tmp/user-data"; then
+    echo "FAIL user data: user-data.sh failed"
+    failures=$((failures + 1))
+  elif ! PATH="$tmp/bin:$PATH" dash -e "$tmp/user-data"; then
+    echo "FAIL user data: does not run under dash"
+    failures=$((failures + 1))
+  elif ! diff -q <(sed "s|__DEPLOY_PUBKEY__|ssh-ed25519 AAAATEST deploy|" "$here/cloud-init.sh") "$tmp/ran.sh" >/dev/null; then
+    echo "FAIL user data: bash was not handed cloud-init.sh with the key filled in"
+    failures=$((failures + 1))
+  else
+    echo "ok   user data runs under dash and hands cloud-init.sh to bash"
+  fi
+  rm -rf "$tmp"
+}
+test_user_data
+
 exit $((failures > 0))
