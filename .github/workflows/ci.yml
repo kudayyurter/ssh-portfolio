@@ -20,3 +20,31 @@ jobs:
       - run: go vet ./...
       - run: go test -race ./...
       - run: docker build -t ssh-portfolio:ci .
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: deploy
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t "ssh-portfolio:${GITHUB_SHA}" .
+      - name: Ship the image to Lightsail
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          docker save "ssh-portfolio:${GITHUB_SHA}" | gzip \
+            | ssh -i ~/.ssh/deploy -p 2200 "deploy@${DEPLOY_HOST}" "${GITHUB_SHA}"
+      - name: Smoke test
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          sleep 3
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            "guest@${DEPLOY_HOST}" whoami | grep -q '^guest'
