@@ -1,0 +1,18 @@
+{
+  "document": { "margin": 0 },
+  "paragraph": {},
+  "heading": { "bold": true, "block_suffix": "\n" },
+  "h1": { "prefix": "" },
+  "h2": { "prefix": "" },
+  "h3": { "prefix": "" },
+  "strong": { "bold": true },
+  "emph": { "italic": true },
+  "item": { "block_prefix": "• " },
+  "enumeration": { "block_prefix": ". " },
+  "list": { "level_indent": 2 },
+  "link": { "color": "#a3a3a3", "underline": true },
+  "link_text": { "bold": true },
+  "hr": { "color": "#262626", "format": "\n────────\n" },
+  "code": { "color": "#a3a3a3" },
+  "code_block": { "color": "#a3a3a3", "margin": 2 }
+}
