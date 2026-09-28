@@ -149,6 +149,14 @@ func waitFor(t *testing.T, out *syncBuffer, want string) {
 	waitForWithin(t, out, want, 5*time.Second)
 }
 
+// waitForBoot waits until the boot animation is on screen. It looks for the
+// tagline, which stays up for the whole animation; status lines like
+// "mounting" can be skipped entirely when the first frame is slow.
+func waitForBoot(t *testing.T, out *syncBuffer, d time.Duration) {
+	t.Helper()
+	waitForWithin(t, out, "data science intern", d)
+}
+
 // waitForWithin is waitFor with a custom deadline, for sessions whose frames
 // are slow to render under -race on small CI runners (512×256 windows).
 func waitForWithin(t *testing.T, out *syncBuffer, want string, d time.Duration) {
@@ -185,8 +193,8 @@ func TestInteractiveSession(t *testing.T) {
 	_, addr := startServer(t, testConfig(t))
 	s, stdin, out := interactive(t, addr, 100, 30)
 
-	waitFor(t, out, "mounting") // the boot animation is running
-	io.WriteString(stdin, "x")  // any key skips it
+	waitForBoot(t, out, 5*time.Second)
+	io.WriteString(stdin, "x") // any key skips it
 	waitFor(t, out, "guest@kuday")
 	io.WriteString(stdin, "cat contact.md\r")
 	waitFor(t, out, "kudayyurter@gmail.com")
@@ -218,7 +226,7 @@ func TestSessionLimit(t *testing.T) {
 	cfg.MaxSessions = 1
 	_, addr := startServer(t, cfg)
 	_, _, out := interactive(t, addr, 100, 30)
-	waitFor(t, out, "mounting")
+	waitForBoot(t, out, 5*time.Second)
 
 	got, err := session(t, addr).Output("pwd")
 	if exitStatus(err) != 1 || !strings.Contains(string(got), "server busy") {
@@ -229,7 +237,7 @@ func TestSessionLimit(t *testing.T) {
 func TestShutdownWarnsOpenSessions(t *testing.T) {
 	srv, addr := startServer(t, testConfig(t))
 	sess, stdin, out := interactive(t, addr, 100, 30)
-	waitFor(t, out, "mounting")
+	waitForBoot(t, out, 5*time.Second)
 	io.WriteString(stdin, "x")
 	waitFor(t, out, "guest@kuday")
 	for srv.programs.count() == 0 {
@@ -291,7 +299,7 @@ func TestConfigFromEnv(t *testing.T) {
 func TestHugeWindowSizeIsClamped(t *testing.T) {
 	checkPeakHeap(t, func(addr string) {
 		_, stdin, out := interactive(t, addr, 1500, 1000)
-		waitForWithin(t, out, "mounting", 30*time.Second)
+		waitForBoot(t, out, 30*time.Second)
 		time.Sleep(300 * time.Millisecond) // several animation frames
 		io.WriteString(stdin, "x")
 		waitForWithin(t, out, "guest@kuday", 30*time.Second)
@@ -301,7 +309,7 @@ func TestHugeWindowSizeIsClamped(t *testing.T) {
 func TestHugeResizeIsClamped(t *testing.T) {
 	checkPeakHeap(t, func(addr string) {
 		sess, _, out := interactive(t, addr, 100, 30)
-		waitFor(t, out, "mounting")
+		waitForBoot(t, out, 5*time.Second)
 		if err := sess.WindowChange(1000, 1500); err != nil {
 			t.Fatal(err)
 		}
@@ -343,7 +351,7 @@ func checkPeakHeap(t *testing.T, session func(addr string)) {
 func TestWelcomeAppearsAfterBoot(t *testing.T) {
 	_, addr := startServer(t, testConfig(t))
 	_, stdin, out := interactive(t, addr, 100, 30)
-	waitFor(t, out, "mounting")
+	waitForBoot(t, out, 5*time.Second)
 	io.WriteString(stdin, "x")
 	waitFor(t, out, "guest@kuday")
 	time.Sleep(200 * time.Millisecond)
