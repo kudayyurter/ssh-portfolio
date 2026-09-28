@@ -17,7 +17,9 @@ PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin no
 EOF
-listening() { ss -ltn | grep -q ":$1 "; }
+# Not "ss | grep -q": grep exits at the first match, ss then dies of SIGPIPE,
+# and pipefail turns a match into a failure.
+listening() { grep -q ":$1 " <<<"$(ss -ltn)"; }
 moved() {
   for _ in $(seq 1 20); do
     if listening 2200 && ! listening 22; then return 0; fi

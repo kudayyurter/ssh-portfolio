@@ -30,6 +30,9 @@ EOF
 ports="22"
 [[ -e "$tmp/restarted" ]] && ports="$ports_after"
 for p in \$ports; do echo "LISTEN 0 128 0.0.0.0:\$p 0.0.0.0:*"; done
+# Real ss prints far more than grep -q reads; keep writing after the match so
+# a reader that stops early (SIGPIPE under pipefail) is caught.
+for _ in \$(seq 1 5000); do echo "LISTEN 0 4096 127.0.0.53%lo:53 0.0.0.0:*"; done
 EOF
   printf '#!/bin/bash\n' >"$tmp/bin/sleep"
   chmod +x "$tmp/bin/"*
