@@ -55,10 +55,35 @@ func (l *limiter) middleware() wish.Middleware {
 	}
 }
 
-func remoteIP(s ssh.Session) string {
-	host, _, err := net.SplitHostPort(s.RemoteAddr().String())
+func remoteIP(s ssh.Session) string { return hostOf(s.RemoteAddr()) }
+
+// connCallback applies the limiter to raw TCP connections, before any SSH
+// handshake work, so idle or half-open connections can't pile up. Returning
+// nil makes the server close the connection.
+func (l *limiter) connCallback(_ ssh.Context, conn net.Conn) net.Conn {
+	ip := hostOf(conn.RemoteAddr())
+	if !l.acquire(ip) {
+		return nil
+	}
+	return &countedConn{Conn: conn, release: func() { l.release(ip) }}
+}
+
+// countedConn gives its limiter slot back when the server closes it.
+type countedConn struct {
+	net.Conn
+	once    sync.Once
+	release func()
+}
+
+func (c *countedConn) Close() error {
+	c.once.Do(c.release)
+	return c.Conn.Close()
+}
+
+func hostOf(addr net.Addr) string {
+	host, _, err := net.SplitHostPort(addr.String())
 	if err != nil {
-		return s.RemoteAddr().String()
+		return addr.String()
 	}
 	return host
 }

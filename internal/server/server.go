@@ -72,6 +72,8 @@ func New(cfg Config, fsys *vfs.FS, profile content.Profile, log *slog.Logger) (*
 	if err != nil {
 		return nil, fmt.Errorf("ssh server: %w", err)
 	}
+	srv.HandshakeTimeout = cfg.HandshakeTimeout
+	srv.ConnCallback = newLimiter(2*cfg.MaxSessions, cfg.MaxConnsPerIP).connCallback
 	s.SSH = srv
 	return s, nil
 }

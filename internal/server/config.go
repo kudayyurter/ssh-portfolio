@@ -15,6 +15,10 @@ type Config struct {
 	PerIP       int
 	IdleTimeout time.Duration
 	MaxSession  time.Duration
+
+	// Connection-level limits, applied before any SSH handshake work.
+	MaxConnsPerIP    int
+	HandshakeTimeout time.Duration
 }
 
 // ConfigFromEnv reads the env vars listed in the spec, with defaults.
@@ -24,6 +28,9 @@ func ConfigFromEnv(getenv func(string) string) (Config, error) {
 		HostKeyPath: or(getenv("HOST_KEY_PATH"), "/data/ssh_host_ed25519"),
 		PublicHost:  or(getenv("PUBLIC_HOST"), "term.kudayyurter.dev"),
 		PerIP:       5,
+
+		MaxConnsPerIP:    10,
+		HandshakeTimeout: 15 * time.Second,
 	}
 	var err error
 	if c.MaxSessions, err = strconv.Atoi(or(getenv("MAX_SESSIONS"), "100")); err != nil || c.MaxSessions < 1 {

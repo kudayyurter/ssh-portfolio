@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -31,6 +32,9 @@ func testConfig(t *testing.T) Config {
 		PerIP:       5,
 		IdleTimeout: time.Minute,
 		MaxSession:  time.Minute,
+
+		MaxConnsPerIP:    10,
+		HandshakeTimeout: 15 * time.Second,
 	}
 }
 
@@ -261,7 +265,8 @@ func TestConfigFromEnv(t *testing.T) {
 		t.Fatal(err)
 	}
 	if c.ListenAddr != ":2222" || c.HostKeyPath != "/data/ssh_host_ed25519" || c.MaxSessions != 100 ||
-		c.IdleTimeout != 10*time.Minute || c.MaxSession != 30*time.Minute || c.PublicHost != "term.kudayyurter.dev" || c.PerIP != 5 {
+		c.IdleTimeout != 10*time.Minute || c.MaxSession != 30*time.Minute || c.PublicHost != "term.kudayyurter.dev" || c.PerIP != 5 ||
+		c.MaxConnsPerIP != 10 || c.HandshakeTimeout != 15*time.Second {
 		t.Fatalf("defaults = %+v", c)
 	}
 	env := map[string]string{"MAX_SESSIONS": "0"}
@@ -350,5 +355,50 @@ func TestExecRejectsLongCommands(t *testing.T) {
 	out, err := session(t, addr).Output("echo " + strings.Repeat("a", 2000))
 	if exitStatus(err) != 1 || !strings.Contains(string(out), "command too long") {
 		t.Fatalf("long command: exit %d, %q", exitStatus(err), out[:min(len(out), 80)])
+	}
+}
+
+// banner reads the SSH version line, or returns "" if the server hangs up.
+func banner(t *testing.T, conn net.Conn) string {
+	t.Helper()
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	buf := make([]byte, 64)
+	n, _ := conn.Read(buf)
+	return string(buf[:n])
+}
+
+func TestConnectionsPerIPAreCapped(t *testing.T) {
+	cfg := testConfig(t)
+	cfg.MaxConnsPerIP = 2
+	_, addr := startServer(t, cfg)
+	for i := range 3 {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer conn.Close()
+		got := banner(t, conn)
+		if i < 2 && !strings.HasPrefix(got, "SSH-2.0") {
+			t.Fatalf("connection %d: no banner (%q)", i+1, got)
+		}
+		if i == 2 && got != "" {
+			t.Fatalf("third connection from one IP was accepted: %q", got)
+		}
+	}
+}
+
+func TestSilentConnectionsTimeOut(t *testing.T) {
+	cfg := testConfig(t)
+	cfg.HandshakeTimeout = 300 * time.Millisecond
+	_, addr := startServer(t, cfg)
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	banner(t, conn)
+	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+	if _, err := io.ReadAll(conn); err != nil {
+		t.Fatalf("connection still open after the handshake timeout: %v", err)
 	}
 }
