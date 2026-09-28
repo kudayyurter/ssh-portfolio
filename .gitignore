@@ -1,0 +1,4 @@
+/.data/
+/deploy/keys/
+/ssh-portfolio
+*.test
