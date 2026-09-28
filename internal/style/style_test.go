@@ -2,6 +2,7 @@ package style
 
 import (
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/charmbracelet/x/ansi"
@@ -79,4 +80,24 @@ func TestLinkIsOSC8(t *testing.T) {
 	if !strings.Contains(got, "\x1b]8;;https://example.com") || ansi.Strip(got) != "example" {
 		t.Fatalf("Link = %q", got)
 	}
+}
+
+// Every visitor renders markdown on their own goroutine; one shared renderer
+// raced and panicked when two sessions ran cat at once.
+func TestMarkdownIsSafeConcurrently(t *testing.T) {
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range 50 {
+				out, err := Markdown("## Title\n\n- one **two** three\n- four\n\nA paragraph of words.\n", 60)
+				if err != nil || !strings.Contains(ansi.Strip(out), "• one two three") {
+					t.Errorf("bad render: %v %q", err, out)
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
 }

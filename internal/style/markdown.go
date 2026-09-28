@@ -3,6 +3,7 @@ package style
 import (
 	_ "embed"
 	"strings"
+	"sync"
 
 	"charm.land/glamour/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -11,8 +12,9 @@ import (
 //go:embed theme.json
 var theme []byte
 
-// renderer is built once; glamour renderers are safe to reuse.
-var renderer = func() *glamour.TermRenderer {
+// renderers holds glamour renderers for reuse. A renderer keeps state while
+// rendering, so each call borrows its own; sessions render concurrently.
+var renderers = sync.Pool{New: func() any {
 	// Glamour's own wrapping breaks inside words like "4.9/5", so it is
 	// turned off (0) and lines are wrapped below at spaces only.
 	r, err := glamour.NewTermRenderer(glamour.WithStylesFromJSONBytes(theme), glamour.WithWordWrap(0))
@@ -20,7 +22,7 @@ var renderer = func() *glamour.TermRenderer {
 		panic(err) // theme.json is embedded; a bad theme is a build-time bug
 	}
 	return r
-}()
+}}
 
 // Markdown renders md to wrap at width columns. Unknown or tiny widths fall
 // back to 80; very wide terminals are capped at 100 so lines stay readable.
@@ -31,7 +33,9 @@ func Markdown(md string, width int) (string, error) {
 	case width > 100:
 		width = 100
 	}
-	out, err := renderer.Render(md)
+	r := renderers.Get().(*glamour.TermRenderer)
+	out, err := r.Render(md)
+	renderers.Put(r)
 	if err != nil {
 		return "", err
 	}
