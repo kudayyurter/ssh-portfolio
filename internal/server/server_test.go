@@ -325,3 +325,22 @@ func checkPeakHeap(t *testing.T, session func(addr string)) {
 		t.Fatalf("heap peaked at %d MB for one oversized window", peak>>20)
 	}
 }
+
+// Printing while the alt screen is still up loses the text, so the welcome
+// must be written after the terminal leaves the alt screen.
+func TestWelcomeAppearsAfterBoot(t *testing.T) {
+	_, addr := startServer(t, testConfig(t))
+	_, stdin, out := interactive(t, addr, 100, 30)
+	waitFor(t, out, "mounting")
+	io.WriteString(stdin, "x")
+	waitFor(t, out, "guest@kuday")
+	time.Sleep(200 * time.Millisecond)
+	raw := out.String()
+	i := strings.LastIndex(raw, "\x1b[?1049l")
+	if i < 0 {
+		t.Fatal("never left the alt screen")
+	}
+	if after := ansi.Strip(raw[i:]); !strings.Contains(after, "Kuday Yurter") {
+		t.Fatalf("welcome not printed after leaving the alt screen:\n%s", after)
+	}
+}

@@ -20,6 +20,22 @@ type ShutdownMsg struct{}
 
 type tickMsg time.Time
 
+// printLaterMsg prints text (and optionally quits) once the alt screen is
+// gone: text printed while the alt screen is up is thrown away with it.
+type printLaterMsg struct {
+	text string
+	quit bool
+}
+
+// startBootMsg enters the animation after the command echo has printed.
+type startBootMsg struct{}
+
+// later sends printLaterMsg two frames from now, after the renderer has
+// switched back to the normal screen.
+func later(text string, quit bool) tea.Cmd {
+	return tea.Tick(2*time.Second/30, func(time.Time) tea.Msg { return printLaterMsg{text, quit} })
+}
+
 type mode int
 
 const (
@@ -91,8 +107,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case ShutdownMsg:
-		m.mode = modeShell
-		return m, tea.Sequence(m.print(style.Muted.Render("system going down for update, reconnect in a moment")), tea.Quit)
+		notice := style.Muted.Render("system going down for update, reconnect in a moment")
+		if m.mode == modeBoot {
+			m.mode = modeShell
+			return m, later(notice, true)
+		}
+		return m, tea.Sequence(m.print(notice), tea.Quit)
+
+	case printLaterMsg:
+		if msg.quit {
+			return m, tea.Sequence(m.print(msg.text), tea.Quit)
+		}
+		return m, m.print(msg.text)
+
+	case startBootMsg:
+		m.mode = modeBoot
+		return m, tick()
 
 	case tickMsg:
 		if m.mode != modeBoot {
@@ -131,7 +161,7 @@ func (m Model) enterShell() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	m.welcomed = true
-	return m, m.print(m.o.Welcome)
+	return m, later(m.o.Welcome, false)
 }
 
 func (m Model) key(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
@@ -217,8 +247,7 @@ func (m Model) submit() (tea.Model, tea.Cmd) {
 		if m.o.Plain || !boot.Fits(m.w, m.h) {
 			return m, m.print(echo + "\n" + "boot: this window can't show the animation (too small or no color)")
 		}
-		m.mode = modeBoot
-		return m, tea.Sequence(m.print(echo), tick())
+		return m, tea.Sequence(m.print(echo), func() tea.Msg { return startBootMsg{} })
 	}
 	if res.Output != "" {
 		echo += "\n" + res.Output

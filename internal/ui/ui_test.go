@@ -42,17 +42,22 @@ func newHarness(t *testing.T, o Options) *harness {
 	return h
 }
 
-// send runs one message through Update and executes the returned command
-// to notice tea.Quit. The recording Print returns nil, so tea.Sequence
-// collapses to the single remaining command.
+// send runs one message through Update and executes the returned command:
+// tea.Quit is noted and the model's own follow-up messages are fed back in.
+// The recording Print returns nil, so tea.Sequence collapses to the single
+// remaining command.
 func (h *harness) send(msg tea.Msg) {
 	h.t.Helper()
 	next, cmd := h.m.Update(msg)
 	h.m = next.(Model)
-	if cmd != nil {
-		if _, ok := cmd().(tea.QuitMsg); ok {
-			h.quit = true
-		}
+	if cmd == nil {
+		return
+	}
+	switch out := cmd().(type) {
+	case tea.QuitMsg:
+		h.quit = true
+	case printLaterMsg, startBootMsg:
+		h.send(out)
 	}
 }
 
