@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -270,5 +271,57 @@ func TestConfigFromEnv(t *testing.T) {
 	env = map[string]string{"IDLE_TIMEOUT": "soon"}
 	if _, err := ConfigFromEnv(func(k string) string { return env[k] }); err == nil {
 		t.Fatal("bad IDLE_TIMEOUT accepted")
+	}
+}
+
+// A client can claim any window size; a huge one used to make every frame
+// allocate width×height cells and could get the container OOM-killed.
+func TestHugeWindowSizeIsClamped(t *testing.T) {
+	checkPeakHeap(t, func(addr string) {
+		_, stdin, out := interactive(t, addr, 1500, 1000)
+		waitFor(t, out, "mounting")
+		time.Sleep(300 * time.Millisecond) // several animation frames
+		io.WriteString(stdin, "x")
+		waitFor(t, out, "guest@kuday")
+	})
+}
+
+func TestHugeResizeIsClamped(t *testing.T) {
+	checkPeakHeap(t, func(addr string) {
+		sess, _, out := interactive(t, addr, 100, 30)
+		waitFor(t, out, "mounting")
+		if err := sess.WindowChange(1000, 1500); err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(500 * time.Millisecond) // several animation frames at the new size
+	})
+}
+
+// checkPeakHeap runs a session against a fresh server and fails if the heap
+// grows past 200 MB while it runs.
+func checkPeakHeap(t *testing.T, session func(addr string)) {
+	t.Helper()
+	_, addr := startServer(t, testConfig(t))
+	var peak uint64
+	stop := make(chan struct{})
+	sampled := make(chan struct{})
+	go func() {
+		defer close(sampled)
+		var ms runtime.MemStats
+		for {
+			select {
+			case <-stop:
+				return
+			case <-time.After(10 * time.Millisecond):
+				runtime.ReadMemStats(&ms)
+				peak = max(peak, ms.HeapInuse)
+			}
+		}
+	}()
+	session(addr)
+	close(stop)
+	<-sampled
+	if peak > 200<<20 {
+		t.Fatalf("heap peaked at %d MB for one oversized window", peak>>20)
 	}
 }
