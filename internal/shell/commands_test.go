@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -169,5 +170,27 @@ func TestSuggestionsIncludeLaterCommands(t *testing.T) {
 	}
 	if got, _ := run(t, s, "hlep"); got != "hlep: command not found\ndid you mean help?" {
 		t.Errorf("hlep = %q", got)
+	}
+}
+
+func TestCatLimitsOperands(t *testing.T) {
+	s := newTestSession(t)
+	line := "cat" + strings.Repeat(" about.md", 11)
+	if got, r := run(t, s, line); got != "cat: too many files (at most 10)" || r.Code != 1 {
+		t.Fatalf("11 files = %q (%d)", got, r.Code)
+	}
+	if _, r := run(t, s, "cat"+strings.Repeat(" about.md", 10)); r.Code != 0 {
+		t.Fatalf("10 files failed: %d", r.Code)
+	}
+}
+
+func TestHistoryIsCapped(t *testing.T) {
+	s := newTestSession(t)
+	for i := range 600 {
+		s.Run(fmt.Sprintf("echo %d", i))
+	}
+	h := s.History()
+	if len(h) != 500 || h[0] != "echo 100" || h[499] != "echo 599" {
+		t.Fatalf("history len %d, first %q, last %q", len(h), h[0], h[len(h)-1])
 	}
 }

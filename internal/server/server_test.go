@@ -344,3 +344,11 @@ func TestWelcomeAppearsAfterBoot(t *testing.T) {
 		t.Fatalf("welcome not printed after leaving the alt screen:\n%s", after)
 	}
 }
+
+func TestExecRejectsLongCommands(t *testing.T) {
+	_, addr := startServer(t, testConfig(t))
+	out, err := session(t, addr).Output("echo " + strings.Repeat("a", 2000))
+	if exitStatus(err) != 1 || !strings.Contains(string(out), "command too long") {
+		t.Fatalf("long command: exit %d, %q", exitStatus(err), out[:min(len(out), 80)])
+	}
+}

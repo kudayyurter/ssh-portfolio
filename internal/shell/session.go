@@ -4,6 +4,7 @@
 package shell
 
 import (
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -36,6 +37,9 @@ type Options struct {
 	Interactive bool             // false for `ssh host <command>`
 	Now         func() time.Time // nil means time.Now
 }
+
+// maxHistory is how many lines a session remembers.
+const maxHistory = 500
 
 // Session is one visitor's shell state.
 type Session struct {
@@ -77,6 +81,9 @@ func (s *Session) Run(line string) Result {
 		return Result{}
 	}
 	s.history = append(s.history, line)
+	if over := len(s.history) - maxHistory; over > 0 {
+		s.history = slices.Delete(s.history, 0, over)
+	}
 	words, err := split(line)
 	if err != nil {
 		return fail(err.Error())

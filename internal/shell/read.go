@@ -11,6 +11,9 @@ import (
 
 var errIsDir = errors.New("Is a directory")
 
+// maxCatFiles bounds how much one command can print.
+const maxCatFiles = 10
+
 func init() {
 	register("cat", command{run: catAs("cat"), group: "Reading", usage: "cat <file>", about: "read a file"})
 	register("less", command{run: catAs("less")})
@@ -27,6 +30,9 @@ func catAs(name string) func(*Session, []string) Result {
 		}
 		if len(ops) == 0 {
 			return fail(name + ": missing file operand")
+		}
+		if len(ops) > maxCatFiles {
+			return fail(fmt.Sprintf("%s: too many files (at most %d)", name, maxCatFiles))
 		}
 		var parts []string
 		code := 0

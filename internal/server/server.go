@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/ssh"
@@ -152,6 +153,9 @@ func (s *Server) program(sess ssh.Session, pty ssh.Pty) *tea.Program {
 	return p
 }
 
+// maxCommand matches the interactive prompt's input limit.
+const maxCommand = 1024
+
 // execMiddleware serves `ssh host <command>` and `ssh -T host`: plain text,
 // no animation, the command's exit code as the session's exit status.
 func (s *Server) execMiddleware() wish.Middleware {
@@ -163,7 +167,15 @@ func (s *Server) execMiddleware() wish.Middleware {
 			}
 			sh := shell.New(s.fs, s.profile, shell.Options{Width: 80})
 			var res shell.Result
-			if raw := sess.RawCommand(); raw != "" {
+			raw := sess.RawCommand()
+			if utf8.RuneCountInString(raw) > maxCommand {
+				s.log.Info("command rejected", "remote", remoteIP(sess), "length", len(raw))
+				wish.Println(sess, fmt.Sprintf("command too long (at most %d characters)", maxCommand))
+				_ = sess.Exit(1)
+				next(sess)
+				return
+			}
+			if raw != "" {
 				s.log.Info("command", "remote", remoteIP(sess), "line", raw, "exec", true)
 				res = sh.Run(raw)
 			} else {
