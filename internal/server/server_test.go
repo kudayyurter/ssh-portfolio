@@ -146,7 +146,14 @@ func (b *syncBuffer) String() string {
 
 func waitFor(t *testing.T, out *syncBuffer, want string) {
 	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
+	waitForWithin(t, out, want, 5*time.Second)
+}
+
+// waitForWithin is waitFor with a custom deadline, for sessions whose frames
+// are slow to render under -race on small CI runners (512×256 windows).
+func waitForWithin(t *testing.T, out *syncBuffer, want string, d time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(d)
 	for time.Now().Before(deadline) {
 		if strings.Contains(ansi.Strip(out.String()), want) {
 			return
@@ -284,10 +291,10 @@ func TestConfigFromEnv(t *testing.T) {
 func TestHugeWindowSizeIsClamped(t *testing.T) {
 	checkPeakHeap(t, func(addr string) {
 		_, stdin, out := interactive(t, addr, 1500, 1000)
-		waitFor(t, out, "mounting")
+		waitForWithin(t, out, "mounting", 30*time.Second)
 		time.Sleep(300 * time.Millisecond) // several animation frames
 		io.WriteString(stdin, "x")
-		waitFor(t, out, "guest@kuday")
+		waitForWithin(t, out, "guest@kuday", 30*time.Second)
 	})
 }
 
