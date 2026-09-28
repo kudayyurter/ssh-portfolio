@@ -3,6 +3,7 @@ module github.com/namelessmonarch0/ssh-portfolio
 go 1.27
 
 require (
+	charm.land/bubbletea/v2 v2.0.10 // indirect
 	charm.land/glamour/v2 v2.0.1 // indirect
 	charm.land/lipgloss/v2 v2.0.6 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
