@@ -1,0 +1,5 @@
+.git
+.data
+deploy/keys
+docs
+*.test
