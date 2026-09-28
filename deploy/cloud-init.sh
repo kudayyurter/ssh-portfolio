@@ -6,25 +6,29 @@ set -euxo pipefail
 
 # 1. Move admin SSH from 22 to 2200 so the portfolio can own port 22.
 #    Ubuntu 24.04 starts sshd from ssh.socket, whose ports are generated from
-#    sshd_config, so reload units and restart the socket. If 2200 does not
-#    come up, undo the change and stop: port 22 stays with sshd.
+#    sshd_config, so reload units and restart the socket. Success means sshd
+#    listens on 2200 and no longer on 22. Anything else (including a failed
+#    restart) removes the change and stops: port 22 stays with sshd.
+#    Tested by deploy/cloud-init_test.sh.
 cat >/etc/ssh/sshd_config.d/10-portfolio.conf <<'EOF'
 Port 2200
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin no
 EOF
-systemctl daemon-reload
-systemctl restart ssh.socket
-for _ in $(seq 1 20); do
-  ss -ltn | grep -q ':2200 ' && break
-  sleep 1
-done
-if ! ss -ltn | grep -q ':2200 '; then
-  rm /etc/ssh/sshd_config.d/10-portfolio.conf
-  systemctl daemon-reload
-  systemctl restart ssh.socket
-  echo "sshd did not come up on 2200; left on 22" >&2
+listening() { ss -ltn | grep -q ":$1 "; }
+moved() {
+  for _ in $(seq 1 20); do
+    if listening 2200 && ! listening 22; then return 0; fi
+    sleep 1
+  done
+  return 1
+}
+if ! { systemctl daemon-reload && systemctl restart ssh.socket && moved; }; then
+  rm -f /etc/ssh/sshd_config.d/10-portfolio.conf
+  systemctl daemon-reload || true
+  systemctl restart ssh.socket || true
+  echo "sshd did not move to 2200; left on 22" >&2
   exit 1
 fi
 

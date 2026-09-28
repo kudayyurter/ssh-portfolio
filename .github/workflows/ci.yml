@@ -19,6 +19,7 @@ jobs:
       - run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
       - run: go vet ./...
       - run: go test -race ./...
+      - run: bash deploy/cloud-init_test.sh
       - run: docker build -t ssh-portfolio:ci .
 
   deploy:
