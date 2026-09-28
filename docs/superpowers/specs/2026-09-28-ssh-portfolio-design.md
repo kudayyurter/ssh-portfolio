@@ -1,7 +1,7 @@
 # SSH Portfolio — Design
 
 **Date:** 2026-09-28
-**Status:** Approved in conversation, awaiting written-spec review
+**Status:** Approved 2026-09-28; revised during planning (see §10)
 **Repo:** `~/DEV/ssh-portfolio` → `github.com/namelessmonarch0/ssh-portfolio`
 
 ## 1. Goal
@@ -120,6 +120,7 @@ Unit boundaries:
 | `MAX_SESSIONS` | `100` | Global concurrent session cap |
 | `IDLE_TIMEOUT` | `10m` | Idle disconnect |
 | `MAX_SESSION` | `30m` | Hard session cap |
+| `PUBLIC_HOST` | `term.kudayyurter.dev` | Host named in the `ssh -t` hint |
 
 ## 4. The shell
 
@@ -196,12 +197,15 @@ otherwise alphabetically, directories first.
 ↑/↓ history, ←/→ cursor, Home/End, Tab completion (commands in first position,
 paths after; common-prefix completion, second Tab lists candidates),
 `Ctrl-C` cancels the line (prints `^C`), `Ctrl-L` clears, `Ctrl-D` on empty
-line exits, mouse wheel and PgUp/PgDn scroll history of output.
+line exits. Output lives in the terminal's own scrollback (the shell runs
+inline, not full-screen), so the mouse wheel, Shift+PgUp and text selection
+work natively.
 
 ### Look
 
-Monochrome, matching the site tokens: background terminal default (dark
-expected), text `#ffffff`, muted `#a3a3a3`, faint `#808080`, lines `#262626`.
+Monochrome, matching the site tokens: background and body text use the
+terminal's defaults (so light terminals work), muted `#a3a3a3`, faint
+`#808080`, lines `#262626`.
 Prompt `guest@kuday:~$ ` (path part updates with cwd). On first prompt a dim
 hint line `try: ls · cat about.md · help` is shown; it disappears after the first
 command. After boot, a short welcome: small name, one tagline line, the hint.
@@ -236,21 +240,22 @@ ASCII output and no boot animation.
 ## 6. Deployment
 
 - **Image:** multi-stage Dockerfile, `CGO_ENABLED=0` static binary on
-  `gcr.io/distroless/static:nonroot` (~15 MB). Read-only root filesystem, one
+  `gcr.io/distroless/static:nonroot` (~30 MB). Read-only root filesystem, one
   volume at `/data` for the host key. Listens on `2222`; host maps `22 → 2222`.
 - **Server:** AWS Lightsail, region `us-east-2`, smallest IPv4 bundle
   (~$5/mo), Ubuntu 24.04, static IP attached. Provisioned by
   `deploy/lightsail.sh` (AWS CLI) with a cloud-init user-data script that:
   installs Docker; adds admin sshd on port 2200; and only after 2200 is
   confirmed listening, removes 22 from sshd so the container can bind it.
-- **Firewall (Lightsail):** 22/tcp open to all; 2200/tcp open only to the
-  admin's IP (passed to the script).
+- **Firewall (Lightsail):** 22/tcp and 2200/tcp open to all; 2200 accepts
+  keys only (GitHub Actions runner IPs change, so an allowlist would block
+  deploys).
 - **DNS:** `A term.kudayyurter.dev → <static IP>` in Vercel DNS.
 - **CD:** GitHub Actions on push to `main`: `go vet` + `go test ./...` →
-  build + push image to `ghcr.io/namelessmonarch0/ssh-portfolio` → SSH to the
-  box on port 2200 with a dedicated deploy key (repo secret) → `docker pull` +
-  restart via a systemd unit that runs the container with
-  `--restart unless-stopped`.
+  build the image → `docker save | gzip | ssh -p 2200 deploy@host <sha>`. The
+  deploy key is restricted to a forced command that loads the image, tags it
+  `ssh-portfolio:current`, and restarts the `ssh-portfolio` systemd unit. A
+  smoke test (`ssh host whoami`) runs after. No registry is involved.
 - **Graceful shutdown:** on SIGTERM stop accepting, print
   `system going down for update, reconnect in a moment` to open sessions, wait
   up to 10 s, exit.
@@ -296,3 +301,16 @@ ASCII output and no boot animation.
 - AWS CLI session must be refreshed (`aws login`) before provisioning.
 - GitHub repo creation and the deploy-key secret need the user's go-ahead
   (outward-facing actions).
+
+## 10. Revisions made during planning
+
+1. Scrolling uses the terminal's native scrollback (inline shell) instead of
+   in-app PgUp/PgDn; text becomes selectable and copyable.
+2. Deploys ship the image over SSH instead of through GHCR.
+3. Admin port 2200 is open to all IPs, key-only.
+4. Body text uses the terminal's default color instead of `#ffffff`.
+5. Identity strings (name, tagline, role, school, degree, top stack, links)
+   live in `content/profile.yaml`; `PUBLIC_HOST` names the host in hints.
+6. Links in content are written as bare URLs/emails so they print once.
+7. Long output is printed in pieces that fit the window, because Bubble Tea's
+   inline renderer loses the prompt when one print is taller than the window.
