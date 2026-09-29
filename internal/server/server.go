@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -85,8 +86,31 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.SSH.Shutdown(ctx)
 }
 
+// linkIcons are Nerd Font glyphs for profile links, keyed by lowercase label.
+// The label is printed too, so fonts without the glyphs still read clearly.
+var linkIcons = map[string]string{
+	"web":      "\uf0ac", // globe
+	"github":   "\uf09b",
+	"linkedin": "\uf0e1",
+	"email":    "\uf0e0", // envelope
+}
+
+// welcome is the name and tagline, then one clickable line per profile link.
 func (s *Server) welcome() string {
-	return style.Bold.Render(s.profile.Name) + "\n" + style.Muted.Render(s.profile.Tagline) + "\n"
+	out := style.Heading.Render(s.profile.Name) + "\n" + style.Muted.Render(s.profile.Tagline) + "\n"
+	if len(s.profile.Links) > 0 {
+		out += "\n"
+		for _, l := range s.profile.Links {
+			name := strings.ToLower(l.Label)
+			icon := linkIcons[name]
+			if icon == "" {
+				icon = "\u2022" // bullet for links without a glyph
+			}
+			label := style.Label.Render(icon + " " + fmt.Sprintf("%-10s", name))
+			out += label + style.Link(l.URL, style.URL.Render(style.LinkLabel(l.URL))) + "\n"
+		}
+	}
+	return out
 }
 
 // maxWidth and maxHeight cap the window size a client can claim. Every frame

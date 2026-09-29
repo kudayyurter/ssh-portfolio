@@ -29,14 +29,16 @@ func TestMarkdownRendersPlainText(t *testing.T) {
 	}
 }
 
-// Review focus 1: light-background terminals.
+// Review focus 1: light-background terminals. Headings are colored, but body
+// text keeps the terminal's own foreground.
 func TestMarkdownNeverForcesAForegroundOnText(t *testing.T) {
 	out, err := Markdown("# Title\n\nJust words and **bold** words.\n", 60)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(out, "38;2;255;255;255") || strings.Contains(out, "\x1b[38") {
-		t.Fatalf("text has a hard-coded foreground color: %q", out)
+	_, body, _ := strings.Cut(out, "\n\n")
+	if !strings.Contains(body, "Just words") || strings.Contains(body, "\x1b[38") {
+		t.Fatalf("body text has a hard-coded foreground color: %q", body)
 	}
 }
 

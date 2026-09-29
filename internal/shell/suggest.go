@@ -3,7 +3,7 @@ package shell
 import "github.com/namelessmonarch0/ssh-portfolio/internal/style"
 
 func notFound(name string) Result {
-	out := name + ": command not found"
+	out := style.Err.Render(name + ": command not found")
 	if m := closest(name); m != "" {
 		out += "\n" + style.Faint.Render("did you mean "+m+"?")
 	}

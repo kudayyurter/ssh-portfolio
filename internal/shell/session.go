@@ -71,7 +71,7 @@ func (s *Session) History() []string { return s.history }
 
 // Prompt is the styled prompt, e.g. "guest@kuday:~/work$ ".
 func (s *Session) Prompt() string {
-	return style.Muted.Render("guest@kuday") + ":" + style.Bold.Render(vfs.Display(s.cwd)) + "$ "
+	return style.UserHost() + style.Muted.Render(":") + style.Path.Render(vfs.Display(s.cwd)) + style.Muted.Render("$") + " "
 }
 
 // Run executes one command line.
@@ -121,4 +121,4 @@ func visibleCommands() []string {
 }
 
 func ok(out string) Result   { return Result{Output: out} }
-func fail(out string) Result { return Result{Output: out, Code: 1} }
+func fail(out string) Result { return Result{Output: style.Err.Render(out), Code: 1} }

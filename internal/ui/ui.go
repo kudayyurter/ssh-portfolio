@@ -62,7 +62,6 @@ type Model struct {
 	hist     int    // history index while browsing; len(history) when on a fresh line
 	draft    []rune // the fresh line saved while browsing history
 	tabbed   bool   // previous key was a Tab that had several candidates
-	used     bool   // a command has run, so the hint is hidden
 }
 
 // New decides whether to animate: plain terminals and windows too small for
@@ -257,11 +256,8 @@ func (m Model) submit() (tea.Model, tea.Cmd) {
 	line := string(m.input)
 	echo := m.promptLine() // uses the directory the command was typed in
 	m.resetLine()
-	if strings.TrimSpace(line) != "" {
-		m.used = true
-		if m.o.OnCommand != nil {
-			m.o.OnCommand(line)
-		}
+	if strings.TrimSpace(line) != "" && m.o.OnCommand != nil {
+		m.o.OnCommand(line)
 	}
 	res := m.sh.Run(line)
 	m.hist = len(m.sh.History())
@@ -383,16 +379,13 @@ func (m Model) height() int {
 	return m.h
 }
 
-// rows lays out the whole shell screen at the current width: scrollback,
-// the hint (until the first command) and the prompt. It also returns where
-// the cursor sits, counted in rows from the top of the layout.
+// rows lays out the whole shell screen at the current width: scrollback and
+// the prompt. It also returns where the cursor sits, counted in rows from the
+// top of the layout.
 func (m Model) rows() (rows []string, cursorRow, cursorCol int) {
 	w := m.width()
 	for _, l := range m.lines {
 		rows = append(rows, strings.Split(ansi.Hardwrap(l, w, true), "\n")...)
-	}
-	if !m.used {
-		rows = append(rows, style.Faint.Render(ansi.Truncate("try: ls · cat about.md · help", w, "")))
 	}
 	pos := ansi.StringWidth(m.sh.Prompt()) + ansi.StringWidth(string(m.input[:m.cursor]))
 	cursorRow, cursorCol = len(rows)+pos/w, pos%w

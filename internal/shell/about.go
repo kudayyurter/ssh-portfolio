@@ -17,7 +17,7 @@ func init() {
 }
 
 func runWhoami(s *Session, _ []string) Result {
-	return ok("guest " + style.Muted.Render("— visiting "+s.profile.Name+" · "+s.profile.Tagline))
+	return ok(style.User.Render("guest") + " " + style.Muted.Render("— visiting "+s.profile.Name+" · "+s.profile.Tagline))
 }
 
 // monogram is "KY" in the site's pixel font at 2×: 22 columns × 7 rows.
@@ -33,12 +33,12 @@ func runNeofetch(s *Session, _ []string) Result {
 		{"Stack", strings.Join(p.Stack, " · ")},
 	}
 	for _, l := range p.Links {
-		rows = append(rows, [2]string{l.Label, style.Link(l.URL, style.LinkLabel(l.URL))})
+		rows = append(rows, [2]string{l.Label, style.Link(l.URL, style.URL.Render(style.LinkLabel(l.URL)))})
 	}
-	info := []string{style.Bold.Render("guest@kuday"), style.Rule.Render(strings.Repeat("─", 11))}
+	info := []string{style.UserHost(), style.Rule.Render(strings.Repeat("─", 11))}
 	for _, r := range rows {
 		if r[1] != "" {
-			info = append(info, style.Muted.Render(fmt.Sprintf("%-9s", r[0]))+r[1])
+			info = append(info, style.Label.Render(fmt.Sprintf("%-9s", r[0]))+r[1])
 		}
 	}
 	card := strings.Join(info, "\n")
@@ -60,7 +60,7 @@ func runHelp(_ *Session, _ []string) Result {
 		if i > 0 {
 			b.WriteString("\n\n")
 		}
-		b.WriteString(style.Bold.Render(g))
+		b.WriteString(style.Heading.Render(g))
 		var names []string
 		for name, c := range commands {
 			if c.group == g {
@@ -70,7 +70,7 @@ func runHelp(_ *Session, _ []string) Result {
 		sort.Strings(names)
 		for _, name := range names {
 			c := commands[name]
-			fmt.Fprintf(&b, "\n  %-18s%s", c.usage, style.Muted.Render(c.about))
+			fmt.Fprintf(&b, "\n  %s%s", style.Command.Render(fmt.Sprintf("%-18s", c.usage)), style.Muted.Render(c.about))
 		}
 	}
 	b.WriteString("\n\n" + style.Faint.Render("Tab completes · ↑/↓ history · PgUp/PgDn scroll · Ctrl-L clears · exit leaves"))
