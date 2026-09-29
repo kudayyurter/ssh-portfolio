@@ -73,6 +73,6 @@ func runHelp(_ *Session, _ []string) Result {
 			fmt.Fprintf(&b, "\n  %-18s%s", c.usage, style.Muted.Render(c.about))
 		}
 	}
-	b.WriteString("\n\n" + style.Faint.Render("Tab completes · ↑/↓ history · Ctrl-L clears · exit leaves"))
+	b.WriteString("\n\n" + style.Faint.Render("Tab completes · ↑/↓ history · PgUp/PgDn scroll · Ctrl-L clears · exit leaves"))
 	return ok(b.String())
 }

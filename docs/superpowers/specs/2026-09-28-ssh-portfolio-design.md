@@ -197,9 +197,10 @@ otherwise alphabetically, directories first.
 ↑/↓ history, ←/→ cursor, Home/End, Tab completion (commands in first position,
 paths after; common-prefix completion, second Tab lists candidates),
 `Ctrl-C` cancels the line (prints `^C`), `Ctrl-L` clears, `Ctrl-D` on empty
-line exits. Output lives in the terminal's own scrollback (the shell runs
-inline, not full-screen), so the mouse wheel, Shift+PgUp and text selection
-work natively.
+line exits. The shell stays full screen after the animation with its own
+scrollback (last 2,000 lines): PgUp/PgDn page, Shift+↑/↓ scroll a line, the
+mouse wheel scrolls 3 rows, and any other key returns to the prompt. Text
+selection is Shift+drag (the app captures the mouse for the wheel).
 
 ### Look
 
@@ -304,13 +305,15 @@ ASCII output and no boot animation.
 
 ## 10. Revisions made during planning
 
-1. Scrolling uses the terminal's native scrollback (inline shell) instead of
-   in-app PgUp/PgDn; text becomes selectable and copyable.
+1. ~~Scrolling uses the terminal's native scrollback (inline shell).~~
+   Reverted 2026-09-28 after use: returning to the visitor's own terminal
+   history after the animation felt like the app had exited. The shell is
+   now full screen with in-app scrollback (see §4).
 2. Deploys ship the image over SSH instead of through GHCR.
 3. Admin port 2200 is open to all IPs, key-only.
 4. Body text uses the terminal's default color instead of `#ffffff`.
 5. Identity strings (name, tagline, role, school, degree, top stack, links)
    live in `content/profile.yaml`; `PUBLIC_HOST` names the host in hints.
 6. Links in content are written as bare URLs/emails so they print once.
-7. Long output is printed in pieces that fit the window, because Bubble Tea's
-   inline renderer loses the prompt when one print is taller than the window.
+7. ~~Long output is printed in pieces that fit the window.~~ No longer
+   needed: the full-screen shell renders its own scrollback.

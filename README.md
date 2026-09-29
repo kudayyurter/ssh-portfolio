@@ -7,7 +7,8 @@ ssh term.kudayyurter.dev
 ```
 
 A pixel-name boot animation, then a small read-only shell: `ls`, `cd`, `cat`,
-`tree`, `neofetch`, `help`. One-shot commands work too:
+`tree`, `neofetch`, `help`, all on the app's own full screen (PgUp/PgDn or
+the mouse wheel scroll back; Shift+drag selects text). One-shot commands work too:
 `ssh term.kudayyurter.dev cat contact.md`.
 
 ## Editing content

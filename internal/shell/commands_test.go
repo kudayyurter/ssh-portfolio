@@ -100,7 +100,7 @@ func TestNeofetch(t *testing.T) {
 func TestHelpListsVisibleCommandsOnly(t *testing.T) {
 	s := newTestSession(t)
 	got, _ := run(t, s, "help")
-	for _, want := range []string{"Moving around", "Reading", "About", "Utilities", "ls [-la] [path]", "cat <file>", "neofetch", "boot"} {
+	for _, want := range []string{"Moving around", "Reading", "About", "Utilities", "ls [-la] [path]", "cat <file>", "neofetch", "boot", "PgUp/PgDn scroll"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("help missing %q", want)
 		}

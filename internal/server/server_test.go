@@ -346,22 +346,16 @@ func checkPeakHeap(t *testing.T, session func(addr string)) {
 	}
 }
 
-// Printing while the alt screen is still up loses the text, so the welcome
-// must be written after the terminal leaves the alt screen.
-func TestWelcomeAppearsAfterBoot(t *testing.T) {
+// After the animation the shell shows the welcome on its own screen.
+func TestWelcomeShowsInTheShell(t *testing.T) {
 	_, addr := startServer(t, testConfig(t))
 	_, stdin, out := interactive(t, addr, 100, 30)
 	waitForBoot(t, out, 5*time.Second)
 	io.WriteString(stdin, "x")
 	waitFor(t, out, "guest@kuday")
-	time.Sleep(200 * time.Millisecond)
-	raw := out.String()
-	i := strings.LastIndex(raw, "\x1b[?1049l")
-	if i < 0 {
-		t.Fatal("never left the alt screen")
-	}
-	if after := ansi.Strip(raw[i:]); !strings.Contains(after, "Kuday Yurter") {
-		t.Fatalf("welcome not printed after leaving the alt screen:\n%s", after)
+	waitFor(t, out, "Kuday Yurter")
+	if strings.Contains(out.String(), "\x1b[?1049l") {
+		t.Fatal("left the alt screen after the animation; the shell should stay full screen")
 	}
 }
 
