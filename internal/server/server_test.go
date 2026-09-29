@@ -354,6 +354,21 @@ func TestWelcomeShowsInTheShell(t *testing.T) {
 	io.WriteString(stdin, "x")
 	waitFor(t, out, "guest@kuday")
 	waitFor(t, out, "Kuday Yurter")
+	for _, label := range []string{"\uf0ac web", "\uf09b github", "\uf0e1 linkedin", "\uf0e0 email"} {
+		waitFor(t, out, label)
+	}
+	// Contact links are OSC 8 hyperlinks, so terminals make them clickable.
+	for _, link := range []string{
+		"\x1b]8;;https://kudayyurter.dev\akudayyurter.dev",
+		"\x1b]8;;https://github.com/namelessmonarch0\agithub.com/namelessmonarch0",
+		"\x1b]8;;https://www.linkedin.com/in/kudayyurter/\alinkedin.com/in/kudayyurter",
+		"\x1b]8;;mailto:kudayyurter@gmail.com\akudayyurter@gmail.com",
+	} {
+		waitFor(t, out, ansi.Strip(link))
+		if !strings.Contains(out.String(), link) {
+			t.Errorf("welcome has no hyperlink %q", link)
+		}
+	}
 	if strings.Contains(out.String(), "\x1b[?1049l") {
 		t.Fatal("left the alt screen after the animation; the shell should stay full screen")
 	}

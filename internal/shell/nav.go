@@ -28,9 +28,9 @@ type entry struct {
 
 func displayName(e entry) string {
 	if e.node == nil || e.node.Dir {
-		return style.Bold.Render(e.name + "/")
+		return style.Dir.Render(e.name + "/")
 	}
-	return e.name
+	return style.File.Render(e.name)
 }
 
 func runLs(s *Session, args []string) Result {
@@ -46,7 +46,7 @@ func runLs(s *Session, args []string) Result {
 	for _, p := range ops {
 		n, err := s.fs.Resolve(s.cwd, p)
 		if err != nil {
-			blocks = append(blocks, fmt.Sprintf("ls: %s: %s", p, err))
+			blocks = append(blocks, style.Err.Render(fmt.Sprintf("ls: %s: %s", p, err)))
 			code = 1
 			continue
 		}
@@ -182,7 +182,7 @@ func runTree(s *Session, args []string) Result {
 		return ok(label)
 	}
 	var b strings.Builder
-	b.WriteString(style.Bold.Render(label))
+	b.WriteString(style.Dir.Render(label))
 	dirs, files := 0, 0
 	var walk func(n *vfs.Node, indent string)
 	walk = func(n *vfs.Node, indent string) {

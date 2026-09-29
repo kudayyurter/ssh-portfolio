@@ -42,7 +42,7 @@ func catAs(name string) func(*Session, []string) Result {
 				err = errIsDir
 			}
 			if err != nil {
-				parts = append(parts, fmt.Sprintf("%s: %s: %s", name, p, err))
+				parts = append(parts, style.Err.Render(fmt.Sprintf("%s: %s: %s", name, p, err)))
 				code = 1
 				continue
 			}
@@ -55,7 +55,7 @@ func catAs(name string) func(*Session, []string) Result {
 // renderFile is a compact header (title; date · stack; link) above the body.
 func (s *Session) renderFile(n *vfs.Node) string {
 	var b strings.Builder
-	b.WriteString(style.Bold.Render(n.Meta.Title))
+	b.WriteString(style.Heading.Render(n.Meta.Title))
 	var meta []string
 	for _, v := range []string{n.Meta.Date, n.Meta.Stack} {
 		if v != "" {
@@ -66,7 +66,7 @@ func (s *Session) renderFile(n *vfs.Node) string {
 		b.WriteString("\n" + style.Muted.Render(strings.Join(meta, " · ")))
 	}
 	if n.Meta.Link != "" {
-		b.WriteString("\n" + style.Link(n.Meta.Link, style.Muted.Render(style.LinkLabel(n.Meta.Link))))
+		b.WriteString("\n" + style.Link(n.Meta.Link, style.URL.Render(style.LinkLabel(n.Meta.Link))))
 	}
 	body, err := style.Markdown(n.Body, s.width)
 	if err != nil {

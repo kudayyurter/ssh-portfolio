@@ -154,12 +154,12 @@ func TestShellIsFullScreen(t *testing.T) {
 
 func TestOutputFlowsFromTheTop(t *testing.T) {
 	h := newHarness(t, Options{Width: 80, Height: 10, Plain: true})
-	want := []string{"welcome!", "try: ls · cat about.md · help", "guest@kuday:~$ "}
+	want := []string{"welcome!", "guest@kuday:~$ "}
 	if got := h.screen(); strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("screen =\n%q\nwant\n%q", got, want)
 	}
 	v := h.m.View()
-	if v.Cursor == nil || v.Cursor.Y != 2 || v.Cursor.X != len("guest@kuday:~$ ") {
+	if v.Cursor == nil || v.Cursor.Y != 1 || v.Cursor.X != len("guest@kuday:~$ ") {
 		t.Fatalf("cursor = %+v, want on the prompt row", v.Cursor)
 	}
 }
@@ -186,8 +186,8 @@ func TestRunCommand(t *testing.T) {
 	if got := h.last(); got != "guest@kuday:~$ ls\nwork/  about.md" {
 		t.Fatalf("printed %q", got)
 	}
-	if len(h.m.input) != 0 || strings.Contains(strings.Join(h.screen(), "\n"), "try: ls") {
-		t.Fatal("input not reset or hint still shown")
+	if len(h.m.input) != 0 {
+		t.Fatal("input not reset")
 	}
 	if len(logged) != 1 || logged[0] != "ls" {
 		t.Fatalf("logged %q", logged)
