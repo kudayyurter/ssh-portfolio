@@ -117,8 +117,9 @@ the previous page's cursor and scroll position.
 
 The mouse is not captured. When the TUI starts, the program sends
 `\x1b[?1007h` (alternate scroll: the terminal turns wheel motion into ↑/↓ in
-the alt screen) and sends `\x1b[?1007l` before quitting. Links are then handled
-by the terminal itself, so Ctrl+click works without Shift. Clicking menu items
+the alt screen). It is left on at exit: many terminals have it on by default,
+and turning it off would stop the wheel scrolling `less` or `man` afterwards.
+Links are then handled by the terminal itself, so Ctrl+click works without Shift. Clicking menu items
 does nothing — the accepted trade-off.
 
 ### Edge cases
@@ -158,8 +159,7 @@ Pure UI state: no SSH, timers or I/O, so it is tested directly.
   mouse wheel handling.
 - After boot, every key goes to `tui.Model`; `View` renders it with the cursor
   hidden and `MouseMode` off.
-- Sends the alternate-scroll on/off sequences with `tea.Raw`
-  (`tea.Sequence(tea.Raw(off), tea.Quit)` on quit).
+- Sends the alternate-scroll sequence with `tea.Raw` when the TUI starts.
 - `Options`: `Welcome` and `OnCommand` are replaced by `OnOpen(path string)`.
 
 ### `internal/server`
