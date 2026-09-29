@@ -154,10 +154,13 @@ func TestOpeningAPageIsReported(t *testing.T) {
 	}
 }
 
-func TestQuitResetsAlternateScroll(t *testing.T) {
+// Quitting leaves alternate scroll on: many terminals (VTE, Alacritty,
+// Ghostty) have it on by default, and turning it off would stop the wheel
+// scrolling less or man in the visitor's tab after they leave.
+func TestQuitLeavesAlternateScrollOn(t *testing.T) {
 	h := newHarness(t, Options{Width: 80, Height: 24, Plain: true})
 	h.press('q', "q")
-	if !h.quit || h.raw[len(h.raw)-1] != altScrollOff {
+	if !h.quit || strings.Join(h.raw, "") != "\x1b[?1007h" {
 		t.Fatalf("quit %v raw %q", h.quit, h.raw)
 	}
 }
@@ -166,7 +169,7 @@ func TestShutdownShowsNoticeThenQuits(t *testing.T) {
 	h := newHarness(t, Options{Width: 80, Height: 24, Plain: true})
 	h.send(ShutdownMsg{})
 	rows := strings.Split(h.screen(), "\n")
-	if !strings.Contains(rows[len(rows)-1], "system going down") || !h.quit || h.raw[len(h.raw)-1] != altScrollOff {
+	if !strings.Contains(rows[len(rows)-1], "system going down") || !h.quit || strings.Contains(strings.Join(h.raw, ""), "\x1b[?1007l") {
 		t.Fatalf("last row %q quit %v raw %q", rows[len(rows)-1], h.quit, h.raw)
 	}
 }

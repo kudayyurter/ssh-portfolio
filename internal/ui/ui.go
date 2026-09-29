@@ -33,13 +33,12 @@ const shutdownWait = 1500 * time.Millisecond // how long the shutdown notice sho
 
 const shutdownNotice = "system going down for update, reconnect in a moment"
 
-// Alternate scroll mode: in the alt screen the terminal turns mouse-wheel
-// motion into ↑/↓ keys. The wheel scrolls pages without the program
-// capturing the mouse, so the terminal still handles clicks on links.
-const (
-	altScrollOn  = "\x1b[?1007h"
-	altScrollOff = "\x1b[?1007l"
-)
+// altScrollOn turns on alternate scroll mode: in the alt screen the terminal
+// turns mouse-wheel motion into ↑/↓ keys, so the wheel scrolls pages without
+// the program capturing the mouse and the terminal still handles clicks on
+// links. It is left on at exit: many terminals have it on by default, and it
+// only affects full-screen programs, where it makes the wheel scroll.
+const altScrollOn = "\x1b[?1007h"
 
 // Options configure a Model.
 type Options struct {
@@ -74,9 +73,6 @@ func tick() tea.Cmd {
 	return tea.Tick(time.Second/30, func(t time.Time) tea.Msg { return tickMsg(t) })
 }
 
-// quit resets alternate scroll before the program ends.
-func quit() tea.Cmd { return tea.Sequence(tea.Raw(altScrollOff), tea.Quit) }
-
 // Init starts the animation, or turns on alternate scroll for the TUI.
 func (m Model) Init() tea.Cmd {
 	if m.mode == modeBoot {
@@ -109,7 +105,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmd, tea.Tick(shutdownWait, func(time.Time) tea.Msg { return quitMsg{} }))
 
 	case quitMsg:
-		return m, quit()
+		return m, tea.Quit
 
 	case tickMsg:
 		if m.mode != modeBoot {
@@ -141,7 +137,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.o.OnOpen(res.Opened)
 		}
 		if res.Quit {
-			return m, quit()
+			return m, tea.Quit
 		}
 		return m, nil
 	}
