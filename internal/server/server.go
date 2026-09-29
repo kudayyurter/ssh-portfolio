@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -26,7 +25,7 @@ import (
 	"github.com/namelessmonarch0/ssh-portfolio/content"
 	"github.com/namelessmonarch0/ssh-portfolio/internal/boot"
 	"github.com/namelessmonarch0/ssh-portfolio/internal/shell"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/style"
+	"github.com/namelessmonarch0/ssh-portfolio/internal/tui"
 	"github.com/namelessmonarch0/ssh-portfolio/internal/ui"
 	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
 )
@@ -86,33 +85,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.SSH.Shutdown(ctx)
 }
 
-// linkIcons are Nerd Font glyphs for profile links, keyed by lowercase label.
-// The label is printed too, so fonts without the glyphs still read clearly.
-var linkIcons = map[string]string{
-	"web":      "\uf0ac", // globe
-	"github":   "\uf09b",
-	"linkedin": "\uf0e1",
-	"email":    "\uf0e0", // envelope
-}
-
-// welcome is the name and tagline, then one clickable line per profile link.
-func (s *Server) welcome() string {
-	out := style.Heading.Render(s.profile.Name) + "\n" + style.Muted.Render(s.profile.Tagline) + "\n"
-	if len(s.profile.Links) > 0 {
-		out += "\n"
-		for _, l := range s.profile.Links {
-			name := strings.ToLower(l.Label)
-			icon := linkIcons[name]
-			if icon == "" {
-				icon = "\u2022" // bullet for links without a glyph
-			}
-			label := style.Label.Render(icon + " " + fmt.Sprintf("%-10s", name))
-			out += label + style.Link(l.URL, style.URL.Render(style.LinkLabel(l.URL))) + "\n"
-		}
-	}
-	return out
-}
-
 // maxWidth and maxHeight cap the window size a client can claim. Every frame
 // allocates width×height cells, so an absurd size is a memory attack.
 const maxWidth, maxHeight = 512, 256
@@ -163,14 +135,12 @@ func (s *Server) program(sess ssh.Session, pty ssh.Pty) *tea.Program {
 	ip := remoteIP(sess)
 	width, height := clampWindow(pty.Window.Width, pty.Window.Height)
 
-	sh := shell.New(s.fs, s.profile, shell.Options{Width: width, Interactive: true})
-	m := ui.New(sh, ui.Options{
-		Width:     width,
-		Height:    height,
-		Plain:     plain,
-		Boot:      boot.Options{Tagline: s.profile.Tagline, Projects: s.projects},
-		Welcome:   s.welcome(),
-		OnCommand: func(line string) { s.log.Info("command", "remote", ip, "line", line) },
+	m := ui.New(tui.New(s.fs, s.profile, width, height), ui.Options{
+		Width:  width,
+		Height: height,
+		Plain:  plain,
+		Boot:   boot.Options{Tagline: s.profile.Tagline, Projects: s.projects},
+		OnOpen: func(path string) { s.log.Info("open", "remote", ip, "path", path) },
 	})
 	// MakeOptions wires the session's input and output; the later
 	// WithWindowSize overrides the unclamped size it sets.

@@ -39,6 +39,11 @@ func testConfig(t *testing.T) Config {
 }
 
 func newServer(t *testing.T, cfg Config) *Server {
+	return newServerLog(t, cfg, io.Discard)
+}
+
+// newServerLog is newServer with its log written to w.
+func newServerLog(t *testing.T, cfg Config, w io.Writer) *Server {
 	t.Helper()
 	fsys, err := vfs.New(content.Files)
 	if err != nil {
@@ -48,7 +53,7 @@ func newServer(t *testing.T, cfg Config) *Server {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv, err := New(cfg, fsys, profile, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	srv, err := New(cfg, fsys, profile, slog.New(slog.NewTextHandler(w, nil)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,15 +195,28 @@ func interactive(t *testing.T, addr string, w, h int) (*gossh.Session, io.Writer
 }
 
 func TestInteractiveSession(t *testing.T) {
-	_, addr := startServer(t, testConfig(t))
+	logs := &syncBuffer{}
+	addr := testsession.Listen(t, newServerLog(t, testConfig(t), logs).SSH)
 	s, stdin, out := interactive(t, addr, 100, 30)
 
 	waitForBoot(t, out, 5*time.Second)
 	io.WriteString(stdin, "x") // any key skips it
-	waitFor(t, out, "guest@kuday")
-	io.WriteString(stdin, "cat contact.md\r")
+	waitFor(t, out, "Kuday Yurter")
+	io.WriteString(stdin, "j")
+	io.WriteString(stdin, "\r")
+	waitFor(t, out, "Engrave Me Now") // a Work entry ("Cummins" is also in the tagline)
+	deadline := time.Now().Add(5 * time.Second)
+	for !strings.Contains(logs.String(), "msg=open") || !strings.Contains(logs.String(), "path=/home/guest/work") {
+		if time.Now().After(deadline) {
+			t.Fatalf("open not logged:\n%s", logs.String())
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	io.WriteString(stdin, "h") // back to home
+	io.WriteString(stdin, "G")
+	io.WriteString(stdin, "\r") // Contact, the last menu entry
 	waitFor(t, out, "kudayyurter@gmail.com")
-	io.WriteString(stdin, "exit\r")
+	io.WriteString(stdin, "q")
 
 	done := make(chan error, 1)
 	go func() { done <- s.Wait() }()
@@ -208,14 +226,14 @@ func TestInteractiveSession(t *testing.T) {
 			t.Fatalf("session ended with %v", err)
 		}
 	case <-time.After(5 * time.Second):
-		t.Fatal("session did not end after exit")
+		t.Fatal("session did not end after q")
 	}
 }
 
 func TestSmallTerminalSkipsBoot(t *testing.T) {
 	_, addr := startServer(t, testConfig(t))
 	_, _, out := interactive(t, addr, 30, 10)
-	waitFor(t, out, "guest@kuday")
+	waitFor(t, out, "Kuday Yurter")
 	if strings.Contains(ansi.Strip(out.String()), "mounting") {
 		t.Fatal("boot animation shown in a 30×10 terminal")
 	}
@@ -239,7 +257,7 @@ func TestShutdownWarnsOpenSessions(t *testing.T) {
 	sess, stdin, out := interactive(t, addr, 100, 30)
 	waitForBoot(t, out, 5*time.Second)
 	io.WriteString(stdin, "x")
-	waitFor(t, out, "guest@kuday")
+	waitFor(t, out, "Kuday Yurter")
 	for srv.programs.count() == 0 {
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -302,7 +320,7 @@ func TestHugeWindowSizeIsClamped(t *testing.T) {
 		waitForBoot(t, out, 30*time.Second)
 		time.Sleep(300 * time.Millisecond) // several animation frames
 		io.WriteString(stdin, "x")
-		waitForWithin(t, out, "guest@kuday", 30*time.Second)
+		waitForWithin(t, out, "Kuday Yurter", 30*time.Second)
 	})
 }
 
@@ -346,31 +364,31 @@ func checkPeakHeap(t *testing.T, session func(addr string)) {
 	}
 }
 
-// After the animation the shell shows the welcome on its own screen.
-func TestWelcomeShowsInTheShell(t *testing.T) {
+// After the animation the home card shows the contact links, clickable.
+func TestHomeShowsContactLinks(t *testing.T) {
 	_, addr := startServer(t, testConfig(t))
 	_, stdin, out := interactive(t, addr, 100, 30)
 	waitForBoot(t, out, 5*time.Second)
 	io.WriteString(stdin, "x")
-	waitFor(t, out, "guest@kuday")
 	waitFor(t, out, "Kuday Yurter")
-	for _, label := range []string{"\uf0ac web", "\uf09b github", "\uf0e1 linkedin", "\uf0e0 email"} {
+	for _, label := range []string{" web", " github", " linkedin", " email"} {
 		waitFor(t, out, label)
 	}
-	// Contact links are OSC 8 hyperlinks, so terminals make them clickable.
-	for _, link := range []string{
-		"\x1b]8;;https://kudayyurter.dev\akudayyurter.dev",
-		"\x1b]8;;https://github.com/namelessmonarch0\agithub.com/namelessmonarch0",
-		"\x1b]8;;https://www.linkedin.com/in/kudayyurter/\alinkedin.com/in/kudayyurter",
-		"\x1b]8;;mailto:kudayyurter@gmail.com\akudayyurter@gmail.com",
+	for _, url := range []string{
+		"https://kudayyurter.dev",
+		"https://github.com/namelessmonarch0",
+		"https://www.linkedin.com/in/kudayyurter/",
+		"mailto:kudayyurter@gmail.com",
 	} {
-		waitFor(t, out, ansi.Strip(link))
-		if !strings.Contains(out.String(), link) {
-			t.Errorf("welcome has no hyperlink %q", link)
+		if !strings.Contains(out.String(), "\x1b]8;;"+url+"\a") {
+			t.Errorf("home has no hyperlink to %s", url)
 		}
 	}
 	if strings.Contains(out.String(), "\x1b[?1049l") {
-		t.Fatal("left the alt screen after the animation; the shell should stay full screen")
+		t.Fatal("left the alt screen after the animation; the TUI should stay full screen")
+	}
+	if !strings.Contains(out.String(), "\x1b[?1007h") {
+		t.Fatal("alternate scroll was not turned on")
 	}
 }
 
