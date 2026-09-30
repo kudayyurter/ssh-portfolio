@@ -90,6 +90,6 @@ Run `go test ./...` for the test suite. Testing, deploying and every environment
 
 ## Credits and license
 
-Built by [Kuday Yurter](https://github.com/namelessmonarch0) on [Wish](https://github.com/charmbracelet/wish) and [Bubble Tea](https://github.com/charmbracelet/bubbletea) from Charm. The demo is recorded with [VHS](https://github.com/charmbracelet/vhs) from [`.github/assets/demo.tape`](.github/assets/demo.tape).
+Built by [Kuday Yurter](https://github.com/kudayyurter) on [Wish](https://github.com/charmbracelet/wish) and [Bubble Tea](https://github.com/charmbracelet/bubbletea) from Charm. The demo is recorded with [VHS](https://github.com/charmbracelet/vhs) from [`.github/assets/demo.tape`](.github/assets/demo.tape).
 
 [MIT](LICENSE) © 2026 Kuday Yurter.
