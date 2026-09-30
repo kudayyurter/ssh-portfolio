@@ -2,3 +2,4 @@
 /deploy/keys/
 /ssh-portfolio
 *.test
+/dev_host_key*
