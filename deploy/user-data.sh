@@ -12,9 +12,9 @@ here=$(cd "$(dirname "$0")" && pwd)
 pubkey=$(cat "$1")
 
 cat <<EOF
-mkdir -p /var/lib/portfolio-init
-cat >/var/lib/portfolio-init/setup.sh <<'PORTFOLIO_INIT'
+mkdir -p /var/lib/termfolio-init
+cat >/var/lib/termfolio-init/setup.sh <<'TERMFOLIO_INIT'
 $(sed "s|__DEPLOY_PUBKEY__|$pubkey|" "$here/cloud-init.sh")
-PORTFOLIO_INIT
-bash /var/lib/portfolio-init/setup.sh
+TERMFOLIO_INIT
+bash /var/lib/termfolio-init/setup.sh
 EOF

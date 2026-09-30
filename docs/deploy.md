@@ -23,7 +23,7 @@ skip the deploy.
 
 | Thing | Where |
 |---|---|
-| Server | Lightsail `ssh-portfolio` (us-east-2), static IP `ssh-portfolio-ip` (names from before the rename; Lightsail cannot rename them) |
+| Server | Lightsail `termfolio` (us-east-2), static IP `termfolio-ip` |
 | Visitors | port 22 → container port 2222 |
 | Admin login | `ssh -p 2200 ubuntu@term.kudayyurter.dev` |
 | Logs | `sudo journalctl -u termfolio -f` |

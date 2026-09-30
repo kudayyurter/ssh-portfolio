@@ -39,7 +39,7 @@ EOF
 
   # Section 1 only, with the config path moved into the temp dir.
   sed -n '/^# 1\./,/^# 2\./p' "$here/cloud-init.sh" \
-    | sed "s|/etc/ssh/sshd_config.d/10-portfolio.conf|$tmp/conf|g" >"$tmp/section.sh"
+    | sed "s|/etc/ssh/sshd_config.d/10-termfolio.conf|$tmp/conf|g" >"$tmp/section.sh"
 
   PATH="$tmp/bin:$PATH" bash -euo pipefail "$tmp/section.sh" >/dev/null 2>&1
   local got_exit=$?
@@ -76,7 +76,7 @@ test_user_data() {
   printf '#!/bin/sh\ncp "$1" "%s/ran.sh"\n' "$tmp" >"$tmp/bin/bash"
   chmod +x "$tmp/bin/bash"
 
-  if ! "$here/user-data.sh" "$tmp/key.pub" | sed "s|/var/lib/portfolio-init|$tmp|g" >"$tmp/user-data"; then
+  if ! "$here/user-data.sh" "$tmp/key.pub" | sed "s|/var/lib/termfolio-init|$tmp|g" >"$tmp/user-data"; then
     echo "FAIL user data: user-data.sh failed"
     failures=$((failures + 1))
   elif ! PATH="$tmp/bin:$PATH" dash -e "$tmp/user-data"; then

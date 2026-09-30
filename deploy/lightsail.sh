@@ -5,9 +5,7 @@
 #   ADMIN_PUBKEY=~/.ssh/id_ed25519.pub deploy/lightsail.sh
 set -euo pipefail
 
-# The live box predates the termfolio rename, and Lightsail cannot rename an
-# instance or static IP, so it keeps the old name. Set NAME for a new box.
-NAME=${NAME:-ssh-portfolio}
+NAME=termfolio
 REGION=${REGION:-us-east-2}
 AZ=${AZ:-${REGION}a}
 ADMIN_PUBKEY=${ADMIN_PUBKEY:-$HOME/.ssh/id_ed25519.pub}

@@ -11,7 +11,7 @@ set -euxo pipefail
 #    listens on 2200 and no longer on 22. Anything else (including a failed
 #    restart) removes the change and stops: port 22 stays with sshd.
 #    Tested by deploy/cloud-init_test.sh.
-cat >/etc/ssh/sshd_config.d/10-portfolio.conf <<'EOF'
+cat >/etc/ssh/sshd_config.d/10-termfolio.conf <<'EOF'
 Port 2200
 PasswordAuthentication no
 KbdInteractiveAuthentication no
@@ -28,22 +28,39 @@ moved() {
   return 1
 }
 if ! { systemctl daemon-reload && systemctl restart ssh.socket && moved; }; then
-  rm -f /etc/ssh/sshd_config.d/10-portfolio.conf
+  rm -f /etc/ssh/sshd_config.d/10-termfolio.conf
   systemctl daemon-reload || true
   systemctl restart ssh.socket || true
   echo "sshd did not move to 2200; left on 22" >&2
   exit 1
 fi
 
-# 2. Docker.
+# 2. Swap and host keys. Loading a new image during a deploy can briefly need
+#    more than the smallest plan's 512 MB; without swap the box froze. Keeping
+#    sshd's host keys means a box rebuilt from a snapshot is still trusted by
+#    admin logins and CI.
+if [ ! -f /swapfile ]; then
+  fallocate -l 1G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+fi
+swapon --show=NAME --noheadings | grep -qx /swapfile || swapon /swapfile
+grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >>/etc/fstab
+cat >/etc/cloud/cloud.cfg.d/99-termfolio.cfg <<'EOF'
+# Keep sshd host keys when an instance is created from a snapshot of this box,
+# so admin logins and CI deploys keep trusting it.
+ssh_deletekeys: false
+EOF
+
+# 3. Docker.
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io
 systemctl enable --now docker
 
-# 3. Host key volume, owned by distroless "nonroot" (uid 65532).
+# 4. Host key volume, owned by distroless "nonroot" (uid 65532).
 install -d -o 65532 -g 65532 -m 700 /var/lib/termfolio
 
-# 4. The service. It starts on the first deploy, once an image exists.
+# 5. The service. It starts on the first deploy, once an image exists.
 cat >/etc/systemd/system/termfolio.service <<'EOF'
 [Unit]
 Description=SSH portfolio
@@ -67,7 +84,7 @@ EOF
 systemctl daemon-reload
 systemctl enable termfolio
 
-# 5. Deploy user: its key can only run the receiver below, which loads an
+# 6. Deploy user: its key can only run the receiver below, which loads an
 #    image from stdin, tags it current and restarts the service.
 useradd --create-home --shell /bin/sh deploy
 usermod -aG docker deploy
