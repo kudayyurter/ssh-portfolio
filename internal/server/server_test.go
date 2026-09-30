@@ -376,7 +376,7 @@ func TestHomeShowsContactLinks(t *testing.T) {
 	}
 	for _, url := range []string{
 		"https://kudayyurter.dev",
-		"https://github.com/namelessmonarch0",
+		"https://github.com/kudayyurter",
 		"https://www.linkedin.com/in/kudayyurter/",
 		"mailto:kudayyurter@gmail.com",
 	} {
