@@ -56,21 +56,27 @@ Each command returns its exit status, so `ssh … nope` exits 127.
 
 ## How it works
 
-<img src="https://skillicons.dev/icons?i=go,docker,aws,githubactions" alt="Go, Docker, AWS, GitHub Actions"> &nbsp; with Charm's Wish, Bubble Tea, Lip Gloss and Glamour
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go">
+  <img src="https://img.shields.io/badge/Wish-A485DD?style=for-the-badge" alt="Wish">
+  <img src="https://img.shields.io/badge/Bubble_Tea-A485DD?style=for-the-badge" alt="Bubble Tea">
+  <img src="https://img.shields.io/badge/Lip_Gloss-A485DD?style=for-the-badge" alt="Lip Gloss">
+  <img src="https://img.shields.io/badge/Glamour-A485DD?style=for-the-badge" alt="Glamour">
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/AWS_Lightsail-FF9900?style=for-the-badge" alt="AWS Lightsail">
+  <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions">
+</p>
 
-```mermaid
-flowchart LR
-  V[Visitor's ssh] --> L[Lightsail :22 → Docker :2222]
-  L --> S[Wish server]
-  S -->|terminal| B[Boot animation] --> T[Menu TUI]
-  S -->|no terminal| SH[Read-only shell]
-  T -->|reads| F[(content/*.md, embedded)]
-  SH -->|reads| F
-```
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/architecture-dark.svg">
+  <img src=".github/assets/architecture-light.svg" alt="A visitor's ssh reaches the Wish server; a session with a terminal gets the boot animation and menu, a session without one gets a read-only shell, and both read the markdown pages embedded in the binary." width="688">
+</picture>
+</p>
 
 - **The content is a filesystem:** markdown in [`content/`](content/) is embedded into the binary and served as a home directory, so the menu and the shell read the same pages. See [editing content](docs/content.md).
 - **Open to anyone, with limits:** no authentication, but sessions and raw connections are capped per IP, handshakes time out, commands are length-limited, and window sizes are clamped to 512×256 so a client can't claim a huge screen.
-- **Golden-file tests:** the boot animation is checked frame by frame at four window sizes, and the TUI pages at 80×24.
+- **Golden-file tests:** the boot animation is checked at five moments at each of four window sizes, and the TUI pages at 80×24.
 
 ## Run locally
 
@@ -90,6 +96,6 @@ Run `go test ./...` for the test suite. Testing, deploying and every environment
 
 ## Credits and license
 
-Built by [Kuday Yurter](https://github.com/kudayyurter) on [Wish](https://github.com/charmbracelet/wish) and [Bubble Tea](https://github.com/charmbracelet/bubbletea) from Charm. The demo is recorded with [VHS](https://github.com/charmbracelet/vhs) from [`.github/assets/demo.tape`](.github/assets/demo.tape).
+Built by [Kuday Yurter](https://github.com/kudayyurter) on [Wish](https://github.com/charmbracelet/wish) and [Bubble Tea](https://github.com/charmbracelet/bubbletea) from Charm. The demo is recorded with [VHS](https://github.com/charmbracelet/vhs) from [`.github/assets/demo.tape`](.github/assets/demo.tape), and the diagram is drawn from [`.github/assets/architecture.json`](.github/assets/architecture.json).
 
 [MIT](LICENSE) © 2026 Kuday Yurter.
