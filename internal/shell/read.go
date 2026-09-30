@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/namelessmonarch0/ssh-portfolio/internal/style"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/ssh-portfolio/internal/style"
+	"github.com/kudayyurter/ssh-portfolio/internal/vfs"
 )
 
 var errIsDir = errors.New("Is a directory")

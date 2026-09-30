@@ -9,9 +9,9 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/style"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/ssh-portfolio/content"
+	"github.com/kudayyurter/ssh-portfolio/internal/style"
+	"github.com/kudayyurter/ssh-portfolio/internal/vfs"
 )
 
 // menuPaths is the home menu, top to bottom; paths missing from the vfs are

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/pixelfont"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/style"
+	"github.com/kudayyurter/ssh-portfolio/internal/pixelfont"
+	"github.com/kudayyurter/ssh-portfolio/internal/style"
 )
 
 func init() {

@@ -1,6 +1,6 @@
 package shell
 
-import "github.com/namelessmonarch0/ssh-portfolio/internal/style"
+import "github.com/kudayyurter/ssh-portfolio/internal/style"
 
 func notFound(name string) Result {
 	out := style.Err.Render(name + ": command not found")

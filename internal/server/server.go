@@ -22,12 +22,12 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"golang.org/x/time/rate"
 
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/boot"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/shell"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/tui"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/ui"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/ssh-portfolio/content"
+	"github.com/kudayyurter/ssh-portfolio/internal/boot"
+	"github.com/kudayyurter/ssh-portfolio/internal/shell"
+	"github.com/kudayyurter/ssh-portfolio/internal/tui"
+	"github.com/kudayyurter/ssh-portfolio/internal/ui"
+	"github.com/kudayyurter/ssh-portfolio/internal/vfs"
 )
 
 // Server is the SSH server plus what it needs to shut down cleanly.

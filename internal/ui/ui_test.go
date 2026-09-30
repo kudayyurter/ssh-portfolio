@@ -10,10 +10,10 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/boot"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/tui"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/ssh-portfolio/content"
+	"github.com/kudayyurter/ssh-portfolio/internal/boot"
+	"github.com/kudayyurter/ssh-portfolio/internal/tui"
+	"github.com/kudayyurter/ssh-portfolio/internal/vfs"
 )
 
 type harness struct {

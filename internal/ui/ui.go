@@ -9,9 +9,9 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/boot"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/style"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/tui"
+	"github.com/kudayyurter/ssh-portfolio/internal/boot"
+	"github.com/kudayyurter/ssh-portfolio/internal/style"
+	"github.com/kudayyurter/ssh-portfolio/internal/tui"
 )
 
 // ShutdownMsg tells a session the server is going down.

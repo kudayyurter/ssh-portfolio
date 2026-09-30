@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/x/ansi"
-	"github.com/namelessmonarch0/ssh-portfolio/content"
+	"github.com/kudayyurter/ssh-portfolio/content"
 )
 
 func testMenu(t *testing.T) []menuItem {

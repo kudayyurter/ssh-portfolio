@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/ssh-portfolio/internal/vfs"
 )
 
 func TestFilesBuildAValidTree(t *testing.T) {

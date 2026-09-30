@@ -12,9 +12,9 @@ import (
 
 	"charm.land/ssh"
 
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/server"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/ssh-portfolio/content"
+	"github.com/kudayyurter/ssh-portfolio/internal/server"
+	"github.com/kudayyurter/ssh-portfolio/internal/vfs"
 )
 
 func main() {

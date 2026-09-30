@@ -6,8 +6,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/ssh-portfolio/content"
+	"github.com/kudayyurter/ssh-portfolio/internal/vfs"
 )
 
 func TestCat(t *testing.T) {

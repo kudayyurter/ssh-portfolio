@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/style"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/ssh-portfolio/content"
+	"github.com/kudayyurter/ssh-portfolio/internal/style"
+	"github.com/kudayyurter/ssh-portfolio/internal/vfs"
 )
 
 // Action is something the caller must do beyond printing output.
