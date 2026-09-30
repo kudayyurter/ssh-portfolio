@@ -1,0 +1,17 @@
+{
+  "alt": "A visitor's ssh reaches the Wish server; a session with a terminal gets the boot animation and menu, a session without one gets a read-only shell, and both read the markdown pages embedded in the binary.",
+  "nodes": [
+    {"id": "you", "title": "Your terminal", "sub": "ssh", "icon": "lucide:terminal", "shape": "client"},
+    {"id": "srv", "title": "Wish server", "sub": "Go in Docker", "icon": "go"},
+    {"id": "tui", "title": "Boot + menu", "sub": "with a terminal", "icon": "lucide:layout-list"},
+    {"id": "sh", "title": "Shell", "sub": "no terminal", "icon": "lucide:square-terminal"},
+    {"id": "md", "title": "Content", "sub": "embedded .md", "icon": "markdown", "shape": "store"}
+  ],
+  "edges": [
+    ["you", "srv"],
+    ["srv", "tui"],
+    ["srv", "sh"],
+    ["tui", "md"],
+    ["sh", "md"]
+  ]
+}
