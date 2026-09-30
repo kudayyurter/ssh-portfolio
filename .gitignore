@@ -3,3 +3,4 @@
 /termfolio
 *.test
 /dev_host_key*
+/.notes/
