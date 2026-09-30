@@ -1,14 +1,37 @@
+<div align="center">
+
 # ssh-portfolio
 
-Kuday Yurter's portfolio, served over SSH. There's nothing to install and no password to type:
+**Kuday Yurter's portfolio, served over SSH.**
+
+[Try it](#try-it) · [How it works](#how-it-works) · [Run locally](#run-locally) · [kudayyurter.dev](https://kudayyurter.dev)
+
+<img src=".github/assets/demo.gif" alt="The portfolio in a terminal: a pixel-font KY monogram and menu, opening Projects and then the Kessler page" width="880">
+
+</div>
+
+A personal portfolio you read in your terminal. There's nothing to install and no password to type: a pixel-font boot animation plays, then a keyboard-driven menu opens onto About, Work, Projects, Stack and Contact.
+
+## Try it
 
 ```sh
 ssh term.kudayyurter.dev
 ```
 
-The name first appears as a pixel-font boot animation (press any key to skip it).
-Then you get a home card with a menu: **About**, **Work**, **Projects**,
-**Stack** and **Contact**.
+Arrow keys or `j` `k` move, `Enter` opens, `Esc` goes back, `q` quits. Any key skips the boot animation.
+
+Without a terminal, the server runs a small read-only shell and prints plain text:
+
+```console
+$ ssh term.kudayyurter.dev ls -l work
+-rw-r--r--  cummins.md                Data Science Intern · May 2026 — Present
+-rw-r--r--  engrave-me-now.md         Operations Manager · Jan 2025 — May 2026
+-rw-r--r--  university-of-houston.md  IT Support Specialist · Jan 2023 — Aug 2024
+-rw-r--r--  ifixandrepair.md          Store Manager & Repair Technician · Dec 2020 — May 2022
+```
+
+<details>
+<summary>All keys and one-shot commands</summary>
 
 | Key | Does |
 |---|---|
@@ -18,52 +41,40 @@ Then you get a home card with a menu: **About**, **Work**, **Projects**,
 | `PgUp` `PgDn` `Space` `g` `G` | jump by a page, to the top, to the bottom |
 | `q` / `Ctrl+C` | quit |
 
-The mouse wheel also scrolls in terminals that support alternate scroll mode.
-In terminals with OSC 8 hyperlinks, you can open links with Ctrl+click (Cmd+click on macOS).
-The contact icons come from a Nerd Font. Each icon has a text label next to it, so other fonts still read clearly.
+The mouse wheel scrolls in terminals with alternate scroll mode, and links open with Ctrl+click (Cmd+click on macOS) in terminals with OSC 8 hyperlinks. Contact icons use a Nerd Font, with a text label beside each one.
 
-## One-shot commands
+| Command | Prints |
+|---|---|
+| `ssh term.kudayyurter.dev cat contact.md` | one page |
+| `ssh term.kudayyurter.dev neofetch` | the whole portfolio on one card |
+| `ssh term.kudayyurter.dev help` | every command: `cd`, `ls`, `tree`, `cat`, `open`, … |
+| `ssh -T term.kudayyurter.dev` | `about.md` |
 
-Without a terminal, the server runs a small read-only shell and prints plain text.
-It returns each command's exit status:
+Each command returns its exit status, so `ssh … nope` exits 127.
 
-```sh
-ssh term.kudayyurter.dev cat contact.md
-ssh term.kudayyurter.dev ls -l work
-ssh term.kudayyurter.dev help        # every command: cd, ls, tree, cat, open, neofetch, …
+</details>
+
+## How it works
+
+<img src="https://skillicons.dev/icons?i=go,docker,aws,githubactions" alt="Go, Docker, AWS, GitHub Actions"> &nbsp; with Charm's Wish, Bubble Tea, Lip Gloss and Glamour
+
+```mermaid
+flowchart LR
+  V[Visitor's ssh] --> L[Lightsail :22 → Docker :2222]
+  L --> S[Wish server]
+  S -->|terminal| B[Boot animation] --> T[Menu TUI]
+  S -->|no terminal| SH[Read-only shell]
+  T -->|reads| F[(content/*.md, embedded)]
+  SH -->|reads| F
 ```
 
-`ssh -T term.kudayyurter.dev` with no command prints `about.md`.
-
-## Editing content
-
-Everything visitors can read lives in [`content/`](content/). Each markdown
-file is one page, and its front matter sets how the page is listed:
-
-```yaml
----
-title: Cummins                 # required
-summary: Data Science Intern   # required; one line, shown in lists and ls -l
-date: May 2026 — Present       # optional
-stack: Python · SQL            # optional
-link: https://…                # optional; top of the page, and `open`
-order: 1                       # optional; listing order, lowest first
----
-```
-
-- A new file in `content/work/` or `content/projects/` shows up in its list
-  automatically. The home menu is fixed in code (`menuPaths` in
-  [`internal/tui/tui.go`](internal/tui/tui.go)), so you need to add any new top-level page there.
-- Write links as bare URLs (`https://…`) or bare emails, not `[text](url)`.
-  That way each one prints once and stays clickable.
-- The name, tagline, links and `neofetch` card come from
-  [`content/profile.yaml`](content/profile.yaml).
-- `go test ./content` checks the front matter and makes sure no city or state
-  slipped in.
+- **The content is a filesystem:** markdown in [`content/`](content/) is embedded into the binary and served as a home directory, so the menu and the shell read the same pages. See [editing content](docs/content.md).
+- **Open to anyone, with limits:** no authentication, but sessions and raw connections are capped per IP, handshakes time out, commands are length-limited, and window sizes are clamped to 512×256 so a client can't claim a huge screen.
+- **Golden-file tests:** the boot animation is checked frame by frame at four window sizes, and the TUI pages at 80×24.
 
 ## Run locally
 
-This needs Go 1.27 or newer. Start the server on port 2222; it creates a host key under the git-ignored `.data/`:
+Needs Go 1.27 or newer. Start the server on port 2222; it creates a host key under the git-ignored `.data/`:
 
 ```sh
 LISTEN_ADDR=:2222 HOST_KEY_PATH=.data/host_ed25519 go run ./cmd/server
@@ -75,40 +86,10 @@ In another terminal:
 ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ```
 
-## Test
+Run `go test ./...` for the test suite. Testing, deploying and every environment variable are in [docs/deploy.md](docs/deploy.md).
 
-```sh
-go test ./...
-go test ./internal/boot -update   # after an intended animation change
-go test ./internal/tui -update    # after an intended layout change
-```
+## Credits and license
 
-After `-update`, review the rewritten `testdata/*.golden` files before you commit. CI
-also runs `gofmt`, `go vet`, the race detector and a Docker build.
+Built by [Kuday Yurter](https://github.com/namelessmonarch0) on [Wish](https://github.com/charmbracelet/wish) and [Bubble Tea](https://github.com/charmbracelet/bubbletea) from Charm. The demo is recorded with [VHS](https://github.com/charmbracelet/vhs) from [`.github/assets/demo.tape`](.github/assets/demo.tape).
 
-## Deploy
-
-When you push to `main`, [CI](.github/workflows/ci.yml) runs the tests, builds the image and
-ships it to the Lightsail box over SSH. It then smoke-tests the live server.
-
-| Thing | Where |
-|---|---|
-| Server | Lightsail `ssh-portfolio` (us-east-2), static IP `ssh-portfolio-ip` |
-| Visitors | port 22 → container port 2222 |
-| Admin login | `ssh -p 2200 ubuntu@term.kudayyurter.dev` |
-| Logs | `sudo journalctl -u ssh-portfolio -f` |
-| Host key | `/var/lib/ssh-portfolio/` (back it up; if it's lost, returning visitors get a host key warning) |
-| First-time setup | [`deploy/lightsail.sh`](deploy/lightsail.sh) |
-
-The server reads these environment variables (defaults in parentheses):
-
-| Variable | Default |
-|---|---|
-| `LISTEN_ADDR` | `:2222` |
-| `HOST_KEY_PATH` | `/data/ssh_host_ed25519` |
-| `PUBLIC_HOST` | `term.kudayyurter.dev` |
-| `MAX_SESSIONS` | `100` |
-| `IDLE_TIMEOUT` | `10m` |
-| `MAX_SESSION` | `30m` |
-
-`PUBLIC_HOST` is the host named in the `ssh -t` hint that one-shot sessions print.
+[MIT](LICENSE) © 2026 Kuday Yurter.
