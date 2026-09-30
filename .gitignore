@@ -1,5 +1,5 @@
 /.data/
 /deploy/keys/
-/ssh-portfolio
+/termfolio
 *.test
 /dev_host_key*

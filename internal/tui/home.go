@@ -6,10 +6,10 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/pixelfont"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/style"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/termfolio/content"
+	"github.com/kudayyurter/termfolio/internal/pixelfont"
+	"github.com/kudayyurter/termfolio/internal/style"
+	"github.com/kudayyurter/termfolio/internal/vfs"
 )
 
 // menuItem is one home menu entry and the page it opens.

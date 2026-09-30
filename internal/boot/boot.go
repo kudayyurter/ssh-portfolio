@@ -12,7 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/namelessmonarch0/ssh-portfolio/internal/pixelfont"
+	"github.com/kudayyurter/termfolio/internal/pixelfont"
 )
 
 // Duration is how long the animation runs before the shell takes over.

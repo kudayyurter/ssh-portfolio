@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/charmbracelet/x/ansi"
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/termfolio/content"
+	"github.com/kudayyurter/termfolio/internal/vfs"
 )
 
 // newTestSession uses a small fixed tree so tests don't break when the real

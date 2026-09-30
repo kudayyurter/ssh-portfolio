@@ -5,7 +5,9 @@
 #   ADMIN_PUBKEY=~/.ssh/id_ed25519.pub deploy/lightsail.sh
 set -euo pipefail
 
-NAME=ssh-portfolio
+# The live box predates the termfolio rename, and Lightsail cannot rename an
+# instance or static IP, so it keeps the old name. Set NAME for a new box.
+NAME=${NAME:-ssh-portfolio}
 REGION=${REGION:-us-east-2}
 AZ=${AZ:-${REGION}a}
 ADMIN_PUBKEY=${ADMIN_PUBKEY:-$HOME/.ssh/id_ed25519.pub}
@@ -15,7 +17,7 @@ export AWS_REGION=$REGION
 # Deploy key for GitHub Actions (private half becomes a repo secret).
 if [[ ! -f $DEPLOY_KEY ]]; then
   mkdir -p deploy/keys
-  ssh-keygen -t ed25519 -N '' -C "ssh-portfolio deploy" -f "$DEPLOY_KEY"
+  ssh-keygen -t ed25519 -N '' -C "termfolio deploy" -f "$DEPLOY_KEY"
 fi
 
 # Admin key pair (your own key) so you can log in on port 2200.

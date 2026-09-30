@@ -23,11 +23,11 @@ skip the deploy.
 
 | Thing | Where |
 |---|---|
-| Server | Lightsail `ssh-portfolio` (us-east-2), static IP `ssh-portfolio-ip` |
+| Server | Lightsail `ssh-portfolio` (us-east-2), static IP `ssh-portfolio-ip` (names from before the rename; Lightsail cannot rename them) |
 | Visitors | port 22 → container port 2222 |
 | Admin login | `ssh -p 2200 ubuntu@term.kudayyurter.dev` |
-| Logs | `sudo journalctl -u ssh-portfolio -f` |
-| Host key | `/var/lib/ssh-portfolio/` (back it up; if it's lost, returning visitors get a host key warning) |
+| Logs | `sudo journalctl -u termfolio -f` |
+| Host key | `/var/lib/termfolio/` (back it up; if it's lost, returning visitors get a host key warning) |
 | First-time setup | [`deploy/lightsail.sh`](../deploy/lightsail.sh) |
 | CI secrets | `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` |
 

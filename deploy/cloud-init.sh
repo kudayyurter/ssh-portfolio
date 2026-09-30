@@ -41,23 +41,23 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io
 systemctl enable --now docker
 
 # 3. Host key volume, owned by distroless "nonroot" (uid 65532).
-install -d -o 65532 -g 65532 -m 700 /var/lib/ssh-portfolio
+install -d -o 65532 -g 65532 -m 700 /var/lib/termfolio
 
 # 4. The service. It starts on the first deploy, once an image exists.
-cat >/etc/systemd/system/ssh-portfolio.service <<'EOF'
+cat >/etc/systemd/system/termfolio.service <<'EOF'
 [Unit]
 Description=SSH portfolio
 After=docker.service ssh.socket
 Requires=docker.service
 
 [Service]
-ExecStartPre=-/usr/bin/docker rm -f ssh-portfolio
-ExecStart=/usr/bin/docker run --name ssh-portfolio --rm \
-  -p 22:2222 -v /var/lib/ssh-portfolio:/data \
+ExecStartPre=-/usr/bin/docker rm -f termfolio
+ExecStart=/usr/bin/docker run --name termfolio --rm \
+  -p 22:2222 -v /var/lib/termfolio:/data \
   --read-only --cap-drop ALL --security-opt no-new-privileges \
   --memory 256m --pids-limit 256 \
-  ssh-portfolio:current
-ExecStop=/usr/bin/docker stop -t 15 ssh-portfolio
+  termfolio:current
+ExecStop=/usr/bin/docker stop -t 15 termfolio
 Restart=always
 RestartSec=2
 
@@ -65,33 +65,33 @@ RestartSec=2
 WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
-systemctl enable ssh-portfolio
+systemctl enable termfolio
 
 # 5. Deploy user: its key can only run the receiver below, which loads an
 #    image from stdin, tags it current and restarts the service.
 useradd --create-home --shell /bin/sh deploy
 usermod -aG docker deploy
-echo 'deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart ssh-portfolio' >/etc/sudoers.d/deploy
+echo 'deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart termfolio' >/etc/sudoers.d/deploy
 chmod 440 /etc/sudoers.d/deploy
 
-cat >/usr/local/bin/ssh-portfolio-deploy <<'EOF'
+cat >/usr/local/bin/termfolio-deploy <<'EOF'
 #!/bin/sh
 # Forced command for the deploy key. Usage (from CI):
-#   docker save ssh-portfolio:<sha> | gzip | ssh -p 2200 deploy@host <sha>
+#   docker save termfolio:<sha> | gzip | ssh -p 2200 deploy@host <sha>
 set -eu
 tag="${SSH_ORIGINAL_COMMAND:-}"
 case "$tag" in
   "" | *[!0-9a-f]*) echo "expected a commit sha" >&2; exit 1 ;;
 esac
 gunzip | docker load
-docker tag "ssh-portfolio:$tag" ssh-portfolio:current
-sudo /usr/bin/systemctl restart ssh-portfolio
+docker tag "termfolio:$tag" termfolio:current
+sudo /usr/bin/systemctl restart termfolio
 docker image prune -af --filter "until=168h" >/dev/null
 echo "deployed $tag"
 EOF
-chmod 755 /usr/local/bin/ssh-portfolio-deploy
+chmod 755 /usr/local/bin/termfolio-deploy
 
 install -d -o deploy -g deploy -m 700 /home/deploy/.ssh
-echo 'command="/usr/local/bin/ssh-portfolio-deploy",restrict __DEPLOY_PUBKEY__' >/home/deploy/.ssh/authorized_keys
+echo 'command="/usr/local/bin/termfolio-deploy",restrict __DEPLOY_PUBKEY__' >/home/deploy/.ssh/authorized_keys
 chown deploy:deploy /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys

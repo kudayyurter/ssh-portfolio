@@ -3,8 +3,8 @@ package tui
 import (
 	"strings"
 
-	"github.com/namelessmonarch0/ssh-portfolio/internal/style"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/termfolio/internal/style"
+	"github.com/kudayyurter/termfolio/internal/vfs"
 )
 
 // detailLines is a file's page: the title, "date · stack" and the link when

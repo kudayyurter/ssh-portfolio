@@ -20,7 +20,7 @@ jobs:
       - run: go vet ./...
       - run: go test -race ./...
       - run: bash deploy/cloud-init_test.sh
-      - run: docker build -t ssh-portfolio:ci .
+      - run: docker build -t termfolio:ci .
 
   # Decides whether this push changes the image. Docs, the license and the
   # first-boot scripts are not in it, so pushes touching only those skip the
@@ -53,7 +53,7 @@ jobs:
     concurrency: deploy
     steps:
       - uses: actions/checkout@v5
-      - run: docker build -t "ssh-portfolio:${GITHUB_SHA}" .
+      - run: docker build -t "termfolio:${GITHUB_SHA}" .
       - name: Ship the image to Lightsail
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -64,7 +64,7 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
           chmod 600 ~/.ssh/deploy
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          docker save "ssh-portfolio:${GITHUB_SHA}" | gzip \
+          docker save "termfolio:${GITHUB_SHA}" | gzip \
             | ssh -i ~/.ssh/deploy -p 2200 "deploy@${DEPLOY_HOST}" "${GITHUB_SHA}"
       - name: Smoke test
         env:

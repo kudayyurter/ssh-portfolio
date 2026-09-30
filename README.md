@@ -1,6 +1,6 @@
 <div align="center">
 
-# ssh-portfolio
+# termfolio
 
 **Kuday Yurter's portfolio, served over SSH.**
 

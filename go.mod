@@ -1,4 +1,4 @@
-module github.com/namelessmonarch0/ssh-portfolio
+module github.com/kudayyurter/termfolio
 
 go 1.27
 

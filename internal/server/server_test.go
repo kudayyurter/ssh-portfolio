@@ -19,8 +19,8 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	gossh "golang.org/x/crypto/ssh"
 
-	"github.com/namelessmonarch0/ssh-portfolio/content"
-	"github.com/namelessmonarch0/ssh-portfolio/internal/vfs"
+	"github.com/kudayyurter/termfolio/content"
+	"github.com/kudayyurter/termfolio/internal/vfs"
 )
 
 func testConfig(t *testing.T) Config {
